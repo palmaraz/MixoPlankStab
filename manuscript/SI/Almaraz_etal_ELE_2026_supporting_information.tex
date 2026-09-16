@@ -1,0 +1,444 @@
+% !TEX program = pdflatex
+% !BIB program = bibtex
+%
+% Ecology Letters Supporting Information.
+% Reformatted from the original PNAS supporting-information sources; all PNAS class files removed.
+
+\documentclass[12pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathpazo}
+%\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{lineno}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage[round,semicolon,authoryear]{natbib}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+% Custom math macros carried over from the original sources.
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\I}{\mathbb{I}}
+
+% Supporting-information numbering (S-prefixed equations, figures and tables).
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
+
+\graphicspath{{../figs/}}
+
+\doublespacing
+\linenumbers
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Supporting Information}
+
+\vspace{1em}
+{\large Mixotrophic interactions drive a complex marine food web to the edge of instability}
+
+\vspace{1em}
+Pablo Almaraz, Suzana G. Leles, David Garc\'{i}a-Callejas and Oscar Godoy
+
+\vspace{0.5em}
+Correspondence: Pablo Almaraz, \href{mailto:pablo.almaraz@csic.es}{pablo.almaraz@csic.es}
+\end{center}
+
+\vspace{1em}
+
+\section{Supplementary methods}
+
+\subsection{Notation and model specification}
+
+The community comprises $s$ functional types indexed by $i,j\in\{1,\ldots,s\}$ and forced by $p$ environmental covariates indexed by $m\in\{1,\ldots,p\}$. Observations are taken at discrete times with non-uniform spacing $\delta_{t}>0$.
+
+The latent biomass of each functional type is held in two equivalent representations: the column vector of raw abundances $\mathbf{N}_{t}=(N_{1,t},\ldots,N_{s,t})^{T}\in\mathbb{R}_{>0}^{\,s}$ and its element-wise natural logarithm $\mathbf{n}_{t}=\log\mathbf{N}_{t}\in\mathbb{R}^{s}$, with the identity $\mathbf{N}_{t}=\exp(\mathbf{n}_{t})$ understood whenever both appear together. The intrinsic per-capita growth rates and the carrying capacities are gathered in two further column vectors, $\mathbf{r}=(r_{1},\ldots,r_{s})^{T}$ and $\mathbf{K}=(K_{1},\ldots,K_{s})^{T}$, both in $\mathbb{R}_{>0}^{\,s}$. Throughout we use the diagonal-matrix shorthand $\mathbf{R}=\mathrm{diag}(\mathbf{r})$, $\mathbf{K}_{\mathrm{d}}=\mathrm{diag}(\mathbf{K})$ and, at equilibrium, $\mathbf{N}^{*}_{\mathrm{d}}=\mathrm{diag}(\mathbf{N}^{*})$; the product $\mathbf{K}_{\mathrm{d}}^{-1}\mathbf{N}_{t}$ is the column vector with $i$-th entry $N_{i,t}/K_{i}$. Explicitly,
+\begin{equation*}
+	\mathbf{N}_{t} \;=\; \begin{pmatrix} N_{1,t} \\ N_{2,t} \\ \vdots \\ N_{s,t} \end{pmatrix},\qquad
+	\mathbf{n}_{t} \;=\; \begin{pmatrix} \log N_{1,t} \\ \log N_{2,t} \\ \vdots \\ \log N_{s,t} \end{pmatrix},\qquad
+	\mathbf{r} \;=\; \begin{pmatrix} r_{1} \\ r_{2} \\ \vdots \\ r_{s} \end{pmatrix},\qquad
+	\mathbf{K} \;=\; \begin{pmatrix} K_{1} \\ K_{2} \\ \vdots \\ K_{s} \end{pmatrix},
+\end{equation*}
+\begin{equation*}
+	\mathbf{R} \;=\; \begin{pmatrix} r_{1} & 0 & \cdots & 0 \\ 0 & r_{2} & \cdots & 0 \\ \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & \cdots & r_{s} \end{pmatrix},\qquad
+	\mathbf{K}_{\mathrm{d}} \;=\; \begin{pmatrix} K_{1} & 0 & \cdots & 0 \\ 0 & K_{2} & \cdots & 0 \\ \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & \cdots & K_{s} \end{pmatrix},\qquad
+	\mathbf{K}_{\mathrm{d}}^{-1}\,\mathbf{N}_{t} \;=\; \begin{pmatrix} N_{1,t}/K_{1} \\ N_{2,t}/K_{2} \\ \vdots \\ N_{s,t}/K_{s} \end{pmatrix}.
+\end{equation*}
+
+Interspecific effects are gathered in the alpha matrix $\mathbf{A}=(\alpha_{ij})\in\mathbb{R}^{s\times s}$, with $\alpha_{ii}=0$. The sign of $\alpha_{ij}$ encodes the type of interaction: positive entries represent facilitation, negative entries represent competition or predation. Intra-specific self-limitation is carried by the dedicated block $-\mathbf{K}_{\mathrm{d}}^{-1}\mathbf{N}_{t}$ rather than by the diagonal of $\mathbf{A}$, which keeps the algebra at and around the equilibrium transparent (see \citep{Levins1968,Ranta2006,Novak2016}). Written entry-wise,
+\begin{equation*}
+	\mathbf{A} \;=\; \begin{pmatrix}
+		0 & \alpha_{12} & \alpha_{13} & \cdots & \alpha_{1s} \\
+		\alpha_{21} & 0 & \alpha_{23} & \cdots & \alpha_{2s} \\
+		\alpha_{31} & \alpha_{32} & 0 & \cdots & \alpha_{3s} \\
+		\vdots & \vdots & \vdots & \ddots & \vdots \\
+		\alpha_{s1} & \alpha_{s2} & \alpha_{s3} & \cdots & 0
+	\end{pmatrix},
+\end{equation*}
+which is in general non-symmetric, $\alpha_{ij}\neq\alpha_{ji}$, since the per-capita direct effect of type $j$ on type $i$ need not equal the reciprocal effect.
+
+The environmental drivers are stored row-wise in the matrix $\mathbf{B}=(\beta_{i,m})\in\mathbb{R}^{s\times p}$ acting on the covariate vector $\mathbf{c}_{t}=(c_{1,t},\ldots,c_{p,t})^{T}\in\mathbb{R}^{p}$. Process noise is the multivariate Gaussian vector $\boldsymbol{\epsilon}_{t}\sim\mathcal{MVN}(\mathbf{0},\Sigma)$, with $\Sigma\in\mathbb{R}^{s\times s}$ symmetric positive-definite; its diagonal entries $\sigma_{i}^{2}=\mathrm{var}(\epsilon_{i})$ measure the variance of unmodeled environmental drivers acting on each type, and its off-diagonal entries $\mathrm{cov}(\epsilon_{i},\epsilon_{j})$ measure shared (latent) environmental forcing. Observation noise is the Gaussian vector $\boldsymbol{\rho}_{t}\sim\mathcal{N}(\mathbf{0},\mathbf{T})$ with $\mathbf{T}\in\mathbb{R}^{s\times s}$ diagonal (measurement errors assumed uncorrelated across functional types). The initial state is $\mathbf{n}_{0}\sim\mathcal{N}(\boldsymbol{\mu}_{0},\Sigma_{0})$. Entry-wise,
+\begin{equation*}
+	\mathbf{B} \;=\; \begin{pmatrix}
+		\beta_{1,1} & \beta_{1,2} & \cdots & \beta_{1,p} \\
+		\beta_{2,1} & \beta_{2,2} & \cdots & \beta_{2,p} \\
+		\vdots & \vdots & \ddots & \vdots \\
+		\beta_{s,1} & \beta_{s,2} & \cdots & \beta_{s,p}
+	\end{pmatrix},\qquad
+	\mathbf{c}_{t} \;=\; \begin{pmatrix} c_{1,t} \\ c_{2,t} \\ \vdots \\ c_{p,t} \end{pmatrix},
+\end{equation*}
+\begin{equation*}
+	\Sigma \;=\; \begin{pmatrix}
+		\sigma_{1}^{2} & \mathrm{cov}(\epsilon_{1},\epsilon_{2}) & \mathrm{cov}(\epsilon_{1},\epsilon_{3}) & \cdots & \mathrm{cov}(\epsilon_{1},\epsilon_{s}) \\
+		\mathrm{cov}(\epsilon_{2},\epsilon_{1}) & \sigma_{2}^{2} & \mathrm{cov}(\epsilon_{2},\epsilon_{3}) & \cdots & \mathrm{cov}(\epsilon_{2},\epsilon_{s}) \\
+		\mathrm{cov}(\epsilon_{3},\epsilon_{1}) & \mathrm{cov}(\epsilon_{3},\epsilon_{2}) & \sigma_{3}^{2} & \cdots & \mathrm{cov}(\epsilon_{3},\epsilon_{s}) \\
+		\vdots & \vdots & \vdots & \ddots & \vdots \\
+		\mathrm{cov}(\epsilon_{s},\epsilon_{1}) & \mathrm{cov}(\epsilon_{s},\epsilon_{2}) & \mathrm{cov}(\epsilon_{s},\epsilon_{3}) & \cdots & \sigma_{s}^{2}
+	\end{pmatrix},
+\end{equation*}
+with $\mathrm{cov}(\epsilon_{i},\epsilon_{j})=\mathrm{cov}(\epsilon_{j},\epsilon_{i})$ by symmetry and $\Sigma\succ 0$ (positive-definite). The observation covariance is
+\begin{equation*}
+	\mathbf{T} \;=\; \begin{pmatrix}
+		\tau_{1}^{2} & 0 & \cdots & 0 \\
+		0 & \tau_{2}^{2} & \cdots & 0 \\
+		\vdots & \vdots & \ddots & \vdots \\
+		0 & 0 & \cdots & \tau_{s}^{2}
+	\end{pmatrix}.
+\end{equation*}
+
+\subsection{State-space model}
+
+The state (process) equation, written row-wise on the log-biomass scale, is
+\begin{equation}\label{LVRickerScalar}
+	n_{i,t+\delta_{t}} \;=\; n_{i,t} + \delta_{t}\, r_{i}\!\left[\,1 - \frac{N_{i,t}}{K_{i}} + \frac{1}{K_{i}}\sum_{j\neq i}^{s}\alpha_{ij}\, N_{j,t}\right] + \delta_{t}\sum_{m=1}^{p}\beta_{i,m}\,c_{m,t} + \delta_{t}\,\epsilon_{i,t}, \qquad i=1,\ldots,s.
+\end{equation}
+
+In compact form, using the diagonal-matrix shorthand of the previous subsection and stacking the $s$ rows of \eqref{LVRickerScalar},
+\begin{equation}\label{LVR_Matrix_form}
+	\begin{aligned}
+		\mathbf{n}_{t+\delta_{t}}\,\mid\,\mathbf{n}_{t},\Sigma \;&\sim\; \mathcal{MVN}\!\left(\, \mathbf{n}_{t} + \delta_{t}\,\mathbf{R}\!\left[\,\mathbf{1}_{s} - \mathbf{K}_{\mathrm{d}}^{-1}\mathbf{N}_{t} + \mathbf{K}_{\mathrm{d}}^{-1}\mathbf{A}\,\mathbf{N}_{t}\right] + \delta_{t}\,\mathbf{B}\,\mathbf{c}_{t},\; \Sigma\right) \\
+		&=\; \mathcal{MVN}\!\left(\, \mathbf{n}_{t} + \delta_{t}\,\mathbf{R}\!\left[\,\mathbf{1}_{s} - \mathbf{K}_{\mathrm{d}}^{-1}(\mathbf{I}-\mathbf{A})\,\mathbf{N}_{t}\right] + \delta_{t}\,\mathbf{B}\,\mathbf{c}_{t},\; \Sigma\right).
+	\end{aligned}
+\end{equation}
+The two right-hand sides of \eqref{LVR_Matrix_form} are equivalent because $\alpha_{ii}=0$ and therefore $-\mathbf{K}_{\mathrm{d}}^{-1}\mathbf{N}_{t}+\mathbf{K}_{\mathrm{d}}^{-1}\mathbf{A}\mathbf{N}_{t}=-\mathbf{K}_{\mathrm{d}}^{-1}(\mathbf{I}-\mathbf{A})\mathbf{N}_{t}$; the grouped form is the one used in the equilibrium and Jacobian derivations below. The scalar form \eqref{LVRickerScalar} is recovered row-wise from \eqref{LVR_Matrix_form} by noting that the $i$-th component of $\mathbf{K}_{\mathrm{d}}^{-1}\mathbf{N}_{t}$ is $N_{i,t}/K_{i}$ and the $i$-th component of $\mathbf{K}_{\mathrm{d}}^{-1}\mathbf{A}\mathbf{N}_{t}$ is $(1/K_{i})\sum_{j}\alpha_{ij}N_{j,t}$, which collapses to $(1/K_{i})\sum_{j\neq i}\alpha_{ij}N_{j,t}$ because $\alpha_{ii}=0$.
+
+Observation and initial-state structure are
+\begin{equation}\label{LVR_Obs_model_supp}
+	\mathbf{y}_{t}\,\mid\,\mathbf{n}_{t},\mathbf{T} \;\sim\; \mathcal{N}(\mathbf{n}_{t},\mathbf{T}),\qquad \mathbf{T}=\mathrm{diag}(\tau_{1}^{2},\ldots,\tau_{s}^{2}),
+\end{equation}
+\begin{equation}\label{LVR_Init}
+	\mathbf{n}_{0}\,\mid\,\boldsymbol{\mu}_{0},\Sigma_{0} \;\sim\; \mathcal{N}(\boldsymbol{\mu}_{0},\Sigma_{0}).
+\end{equation}
+The sampling intervals $\delta_{t}$ vary slightly across the time series (most lapses are of one week, with longer gaps in some months). Rather than interpolating or imputing data, the uneven spacing is propagated through the $\delta_{t}$ factor in \eqref{LVRickerScalar}-\eqref{LVR_Matrix_form}, following \citealp{Clark2004,Clark2007,Mutshinda2011,Almaraz2024}, which keeps the process variance $\Sigma$ aligned with the time-step on which it acts.
+
+\subsection{Equilibrium of the deterministic skeleton}
+
+The deterministic skeleton of the state-space model follows from \eqref{LVR_Matrix_form} by switching off the environmental forcing and the process noise ($\mathbf{c}_{t}\equiv\mathbf{0}$ and $\boldsymbol{\epsilon}_{t}\equiv\mathbf{0}$), and it settles on a closed-form equilibrium that can be read directly off the row-wise scalar form \eqref{LVRickerScalar}. A fixed point $\mathbf{N}^{*}=\exp(\mathbf{n}^{*})$ is a state that the map reproduces at every step, so $\mathbf{n}_{t+\delta_{t}}=\mathbf{n}_{t}$ for all $t$ and the increment in \eqref{LVRickerScalar} must vanish. Since $r_{i}>0$ and $\delta_{t}>0$, the increment can only vanish if the bracketed per-capita growth factor is itself zero for every functional type $i$,
+\begin{equation*}
+	1 - \frac{N_{i}^{*}}{K_{i}} + \frac{1}{K_{i}}\sum_{j\neq i}^{s}\alpha_{ij}\,N_{j}^{*} \;=\; 0.
+\end{equation*}
+Multiplying through by $K_{i}>0$ and moving the interaction term across leaves a scalar balance between each type and the community acting on it,
+\begin{equation*}
+	N_{i}^{*} - \sum_{j\neq i}^{s}\alpha_{ij}\,N_{j}^{*} \;=\; K_{i}.
+\end{equation*}
+The empty diagonal of the interaction matrix ($\alpha_{ii}=0$) lets us drop the restriction $j\neq i$ from the sum without changing its value, because $\sum_{j\neq i}\alpha_{ij}N_{j}^{*}=\sum_{j=1}^{s}\alpha_{ij}N_{j}^{*}=[\mathbf{A}\mathbf{N}^{*}]_{i}$, so the $s$ scalar balances assemble into a single linear system for the equilibrium vector,
+\begin{equation}\label{LVR_Equilibria}
+	(\mathbf{I}-\mathbf{A})\,\mathbf{N}^{*} \;=\; \mathbf{K}, \qquad \text{and, whenever $\mathbf{I}-\mathbf{A}$ is invertible,}\qquad \mathbf{N}^{*}=(\mathbf{I}-\mathbf{A})^{-1}\,\mathbf{K}.
+\end{equation}
+The equilibrium therefore exists in closed form as soon as $\mathbf{I}-\mathbf{A}$ is invertible. A convenient sufficient condition is a spectral radius $\rho(\mathbf{A})<1$, under which the inverse is the convergent Neumann series $(\mathbf{I}-\mathbf{A})^{-1}=\sum_{k\geq 0}\mathbf{A}^{k}$ \citep{Takeuchi1996,Elaydi2005}. We call the equilibrium \emph{feasible} when every component of $\mathbf{N}^{*}$ is strictly positive, that is, when all functional types coexist at positive biomass.
+
+Because $\mathbf{A}$ and $\mathbf{K}$ are inferred jointly with the remaining parameters in the Bayesian state-space scheme, the equilibrium $\mathbf{N}^{*}$ is not a single point but a posterior random variable. We therefore summarize feasibility probabilistically, as the fraction of posterior draws for which $\min_{i}N_{i}^{*}>0$; read this way, the probability of feasibility is a direct, uncertainty-aware measure of community coexistence (cf.\ \citealp{Roberts1974,Almaraz2024}).
+
+\subsection{Jacobian: derivation and compact form}
+
+To probe stability we linearize the deterministic skeleton of \eqref{LVRickerScalar} about the equilibrium $\mathbf{n}^{*}=\log\mathbf{N}^{*}$. Since the model is written on the log-biomass scale, the relevant object is the Jacobian of the log-scale update map $\boldsymbol{\Phi}$, namely $\mathbf{J}=\partial\boldsymbol{\Phi}/\partial\mathbf{n}^{T}\bigl|_{\mathbf{n}^{*}}$, whose $i$-th component is
+\begin{equation*}
+	\Phi_{i}(\mathbf{n}) \;=\; n_{i} + \delta_{t}\,r_{i}\!\left[\,1 - \frac{e^{n_{i}}}{K_{i}} + \frac{1}{K_{i}}\sum_{k\neq i}^{s}\alpha_{ik}\,e^{n_{k}}\right],\qquad i=1,\ldots,s.
+\end{equation*}
+Differentiating $\Phi_{i}$ is a single application of the chain rule once we notice that the biomasses enter only through $N_{k}=e^{n_{k}}$, so that $\partial N_{k}/\partial n_{k}=e^{n_{k}}=N_{k}$ while $\partial N_{k}/\partial n_{\ell}=0$ for $\ell\neq k$. On the diagonal, the interaction sum contributes nothing, because $\alpha_{ii}=0$ removes the $k=i$ term and leaves the self-limitation block $-e^{n_{i}}/K_{i}$ as the only source of $n_{i}$-dependence; hence
+\begin{equation*}
+	\frac{\partial \Phi_{i}}{\partial n_{i}}(\mathbf{n}) \;=\; 1 + \delta_{t}\,r_{i}\!\left[-\frac{1}{K_{i}}\,e^{n_{i}}\right] \;=\; 1 - \delta_{t}\,\frac{r_{i}}{K_{i}}\,N_{i},
+\end{equation*}
+which at the equilibrium reads $J_{ii}=1-\delta_{t}\,r_{i}\,N_{i}^{*}/K_{i}$. Off the diagonal, for $j\neq i$, the only term inside the bracket that depends on $n_{j}$ is $\alpha_{ij}\,e^{n_{j}}$, so
+\begin{equation*}
+	\frac{\partial \Phi_{i}}{\partial n_{j}}(\mathbf{n}) \;=\; \delta_{t}\,r_{i}\!\left[\frac{\alpha_{ij}}{K_{i}}\,e^{n_{j}}\right] \;=\; \delta_{t}\,\frac{r_{i}\,\alpha_{ij}}{K_{i}}\,N_{j},
+\end{equation*}
+which at the equilibrium reads $J_{ij}=+\,\delta_{t}\,r_{i}\,\alpha_{ij}\,N_{j}^{*}/K_{i}$. In each case the multiplicative equilibrium biomass, $N_{i}^{*}$ on the diagonal and $N_{j}^{*}$ off it, is precisely the factor $\partial N/\partial n=N$ contributed by the log transform. Collecting the two results, the Jacobian carries the entries
+\begin{equation*}
+	J_{ii} \;=\; 1 - \delta_{t}\,\frac{r_{i}\,N_{i}^{*}}{K_{i}}, \qquad J_{ij}\bigl|_{j\neq i} \;=\; +\,\delta_{t}\,\frac{r_{i}\,\alpha_{ij}\,N_{j}^{*}}{K_{i}}.
+\end{equation*}
+These entries factor cleanly. Writing $\mathbf{R}=\mathrm{diag}(\mathbf{r})$, $\mathbf{K}_{\mathrm{d}}=\mathrm{diag}(\mathbf{K})$ and $\mathbf{N}^{*}_{\mathrm{d}}=\mathrm{diag}(\mathbf{N}^{*})$, the full Jacobian condenses to
+\begin{equation}\label{LVR_Jacobian_compact}
+	\mathbf{J} \;=\; \mathbf{I} - \delta_{t}\,\mathbf{R}\,\mathbf{K}_{\mathrm{d}}^{-1}\,(\mathbf{I}-\mathbf{A})\,\mathbf{N}^{*}_{\mathrm{d}}.
+\end{equation}
+That this compact product reproduces the entrywise formulas is a one-line check: expanding the $(i,j)$ entry gives $[\mathbf{R}\,\mathbf{K}_{\mathrm{d}}^{-1}\,(\mathbf{I}-\mathbf{A})\,\mathbf{N}^{*}_{\mathrm{d}}]_{ij}=(r_{i}/K_{i})(\delta_{ij}-\alpha_{ij})\,N_{j}^{*}$, so that $J_{ij}=\delta_{ij}-\delta_{t}\,(r_{i}/K_{i})(\delta_{ij}-\alpha_{ij})\,N_{j}^{*}$, which returns $J_{ii}=1-\delta_{t}\,r_{i}\,N_{i}^{*}/K_{i}$ on the diagonal (using $\alpha_{ii}=0$) and $J_{ij}=+\,\delta_{t}\,r_{i}\,\alpha_{ij}\,N_{j}^{*}/K_{i}$ off it.
+
+Equation \eqref{LVR_Jacobian_compact} factorizes the Jacobian into three diagonal scalings flanking the matrix $\mathbf{I}-\mathbf{A}$, which is the same matrix that governs the equilibrium identity \eqref{LVR_Equilibria}. Written out entry-wise, the Jacobian (community) matrix is
+\begin{equation}\label{LVR_Jacobian}
+	\mathbf{J} \;=\; \begin{pmatrix}
+		1-\delta_{t}\dfrac{r_{1}\,N_{1}^{*}}{K_{1}} & +\delta_{t}\dfrac{\alpha_{12}\,r_{1}\,N_{2}^{*}}{K_{1}} & \cdots & +\delta_{t}\dfrac{\alpha_{1s}\,r_{1}\,N_{s}^{*}}{K_{1}} \\[6pt]
+		+\delta_{t}\dfrac{\alpha_{21}\,r_{2}\,N_{1}^{*}}{K_{2}} & 1-\delta_{t}\dfrac{r_{2}\,N_{2}^{*}}{K_{2}} & \cdots & +\delta_{t}\dfrac{\alpha_{2s}\,r_{2}\,N_{s}^{*}}{K_{2}} \\[2pt]
+		\vdots & \vdots & \ddots & \vdots \\[2pt]
+		+\delta_{t}\dfrac{\alpha_{s1}\,r_{s}\,N_{1}^{*}}{K_{s}} & +\delta_{t}\dfrac{\alpha_{s2}\,r_{s}\,N_{2}^{*}}{K_{s}} & \cdots & 1-\delta_{t}\dfrac{r_{s}\,N_{s}^{*}}{K_{s}}
+	\end{pmatrix}.
+\end{equation}
+The off-diagonal entry $J_{ij}$ carries the equilibrium component of the \emph{column} index $j$ (i.e.\ $N_{j}^{*}$), which is the standard consequence of differentiating $e^{n_{j}}$ with respect to $n_{j}$ at the equilibrium. The sampling interval $\delta_{t}$ enters multiplicatively, so the heterogeneous spacing in the data alters the linearized dynamics only through this overall scaling; for the stability calculations reported below we use the median of $\delta_{t}$, which is one week.
+
+\subsection{Stability metrics}
+
+The fitted process is linearly stable when the spectral radius of $\mathbf{J}$ is strictly less than unity, that is, when every eigenvalue of \eqref{LVR_Jacobian} lies inside the open unit disc in the complex plane \citep{Elaydi2005}. The probability of dynamical stability is the fraction of posterior draws of $\mathbf{J}$ satisfying this criterion.
+
+Three complementary scalar diagnostics characterize the response of the fitted system to perturbations of the equilibrium.
+
+\noindent\textbf{Asymptotic resilience} ($\mathrm{R}_{\infty}$): the inverse of the modulus of the dominant eigenvalue of $\mathbf{J}$, in units of $t^{-1}$, measuring the long-term rate of return to the equilibrium after an infinitesimal perturbation of initial conditions \citep{Ives1995,Ives2003,Arnoldi2016a},
+\begin{equation}\label{ResilienceLVR}
+	\mathrm{R}_{\infty} \;=\; \frac{1}{\max_{\lambda}\bigl|\,\lambda(\mathbf{J})\,\bigr|}.
+\end{equation}
+
+\noindent\textbf{Reactivity} ($\mathrm{R}_{0}$): the maximum instantaneous amplification of a perturbation about the equilibrium, evaluated as
+\begin{equation}\label{ReactivityLVR}
+	\mathrm{R}_{0} \;=\; \ln\!\sqrt{\,\lambda_{\max}\!\bigl(\mathbf{J}^{T}\mathbf{J}\bigr)\,},
+\end{equation}
+where $\lambda_{\max}(\mathbf{J}^{T}\mathbf{J})$ is the largest eigenvalue of the symmetric matrix $\mathbf{J}^{T}\mathbf{J}$ \citep{Ives2003,Caswell2005,Snyder2010a}. Positive $\mathrm{R}_{0}$ indicates initial amplification of perturbations even when the system is asymptotically stable.
+
+\noindent\textbf{Stochastic structural stability} ($\mathcal{I}_{s}$): the minimal intensity of continuous white-noise perturbation of the parameters that destabilizes the linearized system,
+\begin{equation}\label{SSS_LVR}
+	\mathcal{I}_{s} \;=\; -\frac{1}{\delta_{t}}\,\ln\!\left(1 - \frac{1}{\bigl\lVert(\mathbf{I}-\mathcal{J})^{-1}\bigr\rVert}\right),
+\end{equation}
+where $\mathcal{J}=\mathbf{J}\otimes\mathbf{J}$ is the Kronecker product of the community matrix with itself, the lifted operator that propagates second-moment perturbations of the linearized dynamics \citep{Arnoldi2016a,Arnoldi2016b}. Large values of $\mathcal{I}_{s}$ correspond to systems robust to perturbations in both a dynamical and a structural sense, since this metric jointly captures the response to perturbations of state variables and the response to sustained stochastic forcing of the parameters.
+
+\noindent\textbf{Probability of feasibility}: the fraction of posterior equilibrium vectors $\mathbf{N}^{*}$ in which every functional type attains a strictly positive abundance. While \eqref{ResilienceLVR}-\eqref{SSS_LVR} characterize how the system responds to perturbations near a given equilibrium, the probability of feasibility quantifies whether the equilibrium itself sustains all functional types simultaneously; a decline in this probability across alternative community configurations signals a contraction of the feasibility domain and increased vulnerability to species loss \citep{Almaraz2024}.
+
+\subsection{Prior specification and parameter estimation}
+
+We fit the model via Bayesian Markov Chain Monte Carlo integration through Gibbs sampling in the JAGS language (Just Another Gibbs Sampler, \citep{Plummer2003}). Normal priors are placed on the environmental coefficients, $\beta_{i,m}\sim\mathcal{N}(0,1)$, and positively truncated normal priors on the per-capita growth rates and carrying capacities,
+\begin{equation*}
+	r_{i} \sim \mathcal{N}(0,0.25)\,\mathrm{T}(0,\cdot), \qquad K_{i} \sim \mathcal{N}(\widehat{K}_{i},0.25)\,\mathrm{T}(0,\cdot),
+\end{equation*}
+where $\widehat{K}_{i}$ is a preliminary estimate of each carrying capacity obtained from early MCMC runs; this location parameter improves the mixing and stabilization of the chains. The observation variances are fixed at $\tau_{i}^{2}=0.1\,\overline{y_{i}}$ (10\% of the observed biomass of each functional type), a value chosen because no direct measurement-error estimates are available from the sampling scheme; sensitivity checks at $\pm 50\%$ of this default did not alter the posterior inferences materially.
+
+The process covariance $\Sigma$ is endowed with a scaled inverse-Wishart prior (\citealp{Huang2013}), $\Sigma^{-1}\sim\mathrm{SWishart}(\boldsymbol{\zeta},S)$, which is the conjugate-on-the-expanded-space construction whose marginal correlation parameters are uniform, in contrast to the standard inverse-Wishart prior whose variance parameters are tightly constrained (\citealp{Gelman2020,Huang2013}). We place the same prior scale $\boldsymbol{\zeta}=\mathbb{I}$ on every entry of the variance-covariance matrix and set the number of degrees of freedom equal to the dimension $s=10$; under this choice, the marginal correlation random variables are uniform on the interval $[-1,1]$, that is, $\rho_{ij}\sim\mathcal{U}(-1,1)$ for $i\neq j$.
+
+With $s=10$ functional types and $\alpha_{ii}=0$ by construction, the alpha matrix carries $s(s-1)=90$ off-diagonal entries to estimate, in general non-symmetric ($\alpha_{ij}\neq\alpha_{ji}$). High-dimensional inference of this kind poses well-known practical identifiability problems (\citealp{Cole2020}), as parameters of weak or effectively null value tend to correlate during posterior simulation with other parameters and destroy identifiability (e.g.\ \citealp{Machta2013,Chis2016,Cole2020}). Bayesian regularization (\citealp{Mutshinda2011,Almaraz2011,Piironen2017}) addresses this by encoding sparsity directly in the prior. We adopt Stochastic Search Variable Selection (SSVS; \citep{George1993}), also known as Spike-and-Slab priors (\citealp{Piironen2017,Almaraz2021}), which exploits the ability of the Gibbs algorithm to sample from discrete distributions and assigns to each inter-type interaction an inclusion indicator whose posterior marginal probability quantifies the support for that interaction in the observed data.
+
+\subsection{Posterior probabilities of interaction}
+
+Each inter-type interaction parameter $\alpha_{ij}$ ($i\neq j$) carries a Gaussian prior whose variance is a mixture of a spike and a slab,
+\begin{equation}\label{inttype_dist}
+	\alpha_{ij} \sim \mathcal{N}(0,\nu_{ij}^{2}),
+\end{equation}
+with the mixture-of-variances hyperprior
+\begin{equation}\label{ssvs}
+	\nu_{ij}^{2} \;=\; (1-p_{ij})\,\gamma_{0}^{2} + p_{ij}\,\gamma_{1}^{2}.
+\end{equation}
+Here $p_{ij}$ is the indicator of inclusion of the $(i,j)$ interaction, while $\gamma_{0}^{2}$ and $\gamma_{1}^{2}$ are the spike and slab variances, set to $\gamma_{0}^{2}=10^{-3}$ and $\gamma_{1}^{2}=100$. The indicator follows a Bernoulli distribution,
+\begin{equation}\label{dist_bern}
+	p_{ij} \sim \mathrm{Bern}(\rho),
+\end{equation}
+where $\rho$ is the prior probability of inclusion common to all 90 inter-type interactions. Rather than fixing $\rho$ to a constant (\citealp{Almaraz2011,Mutshinda2011}), we let the model learn from sparsity by placing a weakly informative beta hyperprior on it, $\rho\sim\mathrm{Beta}(2,2)$, which is centered on $0.5$ and is the conjugate prior of the Bernoulli (\citealp{Gelman2020,Almaraz2024}).
+
+When $p_{ij}=1$ during the MCMC simulation, $\alpha_{ij}$ is active and inherits the slab variance, $\nu_{ij}^{2}=\gamma_{1}^{2}=100$, so the effective prior is $\alpha_{ij}\sim\mathcal{N}(0,100)$. When $p_{ij}=0$, $\alpha_{ij}$ is inactive and inherits the spike variance, $\nu_{ij}^{2}=\gamma_{0}^{2}=10^{-3}$, so the effective prior is $\alpha_{ij}\sim\mathcal{N}(0,10^{-3})$, i.e.\ tightly concentrated at zero. Interactions that genuinely structure the dynamics spend a larger fraction of the MCMC iterations in the slab, so the posterior probability of inclusion of a given interaction is the proportion of MCMC iterations in which $p_{ij}=1$. Comparing this posterior probability to the prior probability of inclusion $\rho$ yields the Bayes factor (\citealp{Kass1995,Almaraz2011,Mutshinda2011}) for inclusion of each interaction,
+\begin{equation}\label{BF_ij}
+	\mathrm{BF}_{ij} \;=\; \frac{p_{ij}}{1-p_{ij}} \cdot \frac{1-\rho}{\rho}.
+\end{equation}
+The Kass-Raftery scale (\citealp{Kass1995}) is then used to grade the evidence in favour of the inclusion of each inter-type interaction of $\mathbf{A}$ in the state-space model \eqref{LVR_Matrix_form}.
+
+\newpage
+
+\setcounter{table}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+
+\begin{table}[h]
+	\centering
+	\small
+	\caption[Functional types]{Summary of the 10 functional types used in the mixotrophic web analysis of the L4 plankton community. CM: constitutive mixotroph; NCM: non-constitutive mixotroph.}
+	\label{tab:functional_types}
+	\begin{tabular}{p{2.2cm} p{4.5cm} p{1.8cm} p{1.6cm} p{3.7cm}}
+		\toprule
+		\textbf{Trophic strategy} & \textbf{Functional type} & \textbf{Size class} & \textbf{Abbrev.} & \textbf{Representative taxa} \\
+		\midrule
+		Autotroph & Picophytoplankton & 0.2--2 $\mu$m & -- & \textit{Synechococcus}, picoeukaryotes \\[4pt]
+		Autotroph & Diatoms & 20--200 $\mu$m & -- & \textit{Chaetoceros}, \textit{Thalassiosira} \\[4pt]
+		\midrule
+		Heterotroph & Heterotrophic bacteria & $<$0.2 $\mu$m & -- & Heterotrophic bacteria \\[4pt]
+		Heterotroph & Nanozooplankton & 2--20 $\mu$m & -- & Heterotrophic nanoflagellates \\[4pt]
+		Heterotroph & Microzooplankton & 20--200 $\mu$m & -- & Ciliates, heterotrophic dinoflagellates \\[4pt]
+		Heterotroph & Mesozooplankton & $>$200 $\mu$m & -- & Copepods, cladocerans \\[4pt]
+		\midrule
+		Mixotroph (CM) & Nano-constitutive mixotrophs & 2--20 $\mu$m & NanoCMs & Mixotrophic nanoflagellates \\[4pt]
+		Mixotroph (CM) & Micro-constitutive mixotrophs & 20--200 $\mu$m & MicroCMs & Mixotrophic dinoflagellates \\[4pt]
+		\midrule
+		Mixotroph (NCM) & Generalist non-constitutive mixotrophs & 20--200 $\mu$m & GNCMs & \textit{Strombidium} spp. \\[4pt]
+		Mixotroph (NCM) & Specialist non-constitutive mixotrophs & 20--200 $\mu$m & SNCMs & \textit{Mesodinium} spp. \\[4pt]
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+\newpage
+
+
+\section*{Supplementary figures}
+
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+\subsection*{Results for the mixotrophic web (10 functional types)}
+
+The following figures present the detailed results of the Bayesian LVR-SSVS model fitted to the full mixotrophic web, comprising 10 functional types: heterotrophic bacteria, picophytoplankton, nanozooplankton, NanoCMs, diatoms, MicroCMs, GNCMs, SNCMs, microzooplankton, and mesozooplankton.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{../figs/Environmental_data.pdf}
+	\caption[Matrix of posterior correlations]{Mixotrophic web (10 functional types). Matrix of posterior cross-correlations among the environmental variables measured in the study area at a depth of 10 m. Bivariate scatter plots are shown below the diagonal, histograms on the diagonal, and the Pearson correlation above the diagonal. The robust regression fittings through LOESS smoothed regressions are shown in red, while the correlation ellipses are shown in black with the centroid in red.}
+	\label{fig:Corr_env_vars}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{../figs/PPC_TS_fullplot.pdf}
+	\caption[Posterior Predictive Checks]{Mixotrophic web (10 functional types). Posterior Predictive Checks performed with the stochastic formulation of the Lotka-Volterra-Ricker model shown in Eqn. \ref{LVR_Matrix_form} fitted to the community time series of the plankton community. Blue dots \textcolor{blue}{$\bullet$} denote the weekly measured biomass for each functional type, and red lines \textcolor{red}{{\Huge -}} denote the posterior predicted average of 3000 synthetic biomass time series for each functional type. Red shaded regions contain the 90\% HDI of the posterior predictions for each type.}
+	\label{fig:PPC_TS_fullplot}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{../figs/bayes_factors.pdf}
+	\caption[Matrix of Bayes factors]{Mixotrophic web (10 functional types). Matrix of Bayes factors of inter-type interactions in matrix $ \mathbf{A} $, colored according to the \citep{Kass1995} scale. Colored positions in the matrix refer to the degree of support in the posterior distribution. Only 5 out of 90 interactions yielded a factor worth mentioning. In particular, interactions among Nanozooplankton (3), GNCMs (7), SNCMs (8), and Microzooplankton (9) had a decisive support conditioned on the observed data.}
+	\label{fig:bayes_factors}
+\end{figure}
+
+
+\newpage
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{../figs/Environmental_effects.pdf}
+	\caption[Posterior distribution of the environmental effects]{Mixotrophic web (10 functional types). Posterior distribution of the environmental effects on the growth rate of each plankton functional type. All values correspond to the measured environment at a depth of 10 m. The variable nutrient includes nitrates, silicate and phosphate. These three variables were strongly positively correlated (Fig.~S1). Units: Nutrients and Ammonium, $ \mu \text{M} $; Chlorophyll, $ \mu \text{g C L}^{-1} $; Temperature, ºC; Mixed-layer depth, m; NanoCMs: constitutive mixotrophs within the nanoplankton size class; MicroCMs: constitutive mixotrophs within the microplankton size class; GNCMs: generalist non-constitutive mixotrophs; SNCMs: specialist non-constitutive mixotrophs. }
+	\label{fig:Environmental_effects}
+\end{figure}
+
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{../figs/Env_cov_spring.pdf}
+	\caption[Inter-type environmental synchrony]{Mixotrophic web (10 functional types). Inter-type environmental synchrony. Shown are the correlations between every pair of functional types in the response to the common environment, as measured by the off-diagonal terms of the matrix $ \Sigma $. Red links denote positive correlations, blue links negative ones. Link thickness is proportional to the magnitude of correlation.}
+	\label{fig:Environ_synchrony}
+\end{figure}
+
+\newpage
+
+\subsection*{Results for the plant-animal dichotomy -- Grouping 1 (7 functional types)}
+
+In this alternative classification, non-constitutive mixotrophs (GNCMs and SNCMs) are merged with microzooplankton, and micro-constitutive mixotrophs (MicroCMs) are merged with diatoms into a single microautotroph category. This yields 7 functional types, following the traditional plant-animal dichotomy. \\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{../figs/Interaction_networks_wlegend_nonmixo_1.pdf}
+	\caption[Network of posterior probability of interactions and interactions]{\footnotesize Plant-animal dichotomy, Grouping 1 (7 functional types). In \textbf{A}, network of posterior probability of interactions, constructed with the marginal probabilities of interactions across the ensemble of posterior networks explored by the SSVS algorithm. Green arrows (edges) indicate the direction of the effect and its magnitude (thickness), from 0 to 1. In \textbf{B}, network of interactions as expressed in the $\alpha$-matrix. These links measure the direct impact of the average species \textit{j} individual on species \textit{i}’s growth rate, relative to \textit{i}’s effect on its own growth rate (\citealp{Novak2016}). Interactions are depicted as directed arrows. In this figure, blue arrows denote a negative effect of the $\alpha_{ij}$, while red arrows denote a positive impact; arrow thickness depicts the relative magnitude of the effect. Note that the posterior values are given for the average of the posterior evaluated at the slab.}
+	\label{fig:Interaction_networks_wlegend_nonmixo_1}
+	% \setfloatalignment{b}  %b/t
+	% \forceversofloat  % \forcerectofloat
+\end{figure}
+
+\newpage
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../figs/Wrapped_stability_nonmixo_1.pdf}
+	\caption[Posterior probability of stability and feasibility]{Plant-animal dichotomy, Grouping 1 (7 functional types). In (\textbf{a}), the posterior eigenvalues of the Jacobian \ref{LVR_Jacobian} matrix are shown in the unit circle of the complex plane. The probability of stability is the fraction of eigenvalues with modulus strictly smaller than 1 in the posterior distribution. In (\textbf{b}), the posterior distribution of each component of the equilibrium vector $ \mathbf{N}^* $ is shown for each functional group; for comparison, the MAP estimate for the carrying capacities are shown as red circles. The probability of feasibility is the fraction of posterior estimates of the equilibrium vector that are strictly positive. In these groupings, non-constitutive mixotrophs are merged with microzooplankton and/or microautotrophs (see text for details).}
+	\label{fig:Wrapped_stability_nonmixo_1}
+	% \setfloatalignment{b}  %b/t
+	% \forceversofloat  % \forcerectofloat
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{../figs/PPC_TS_fullplot_nonmixo1.pdf}
+	\caption[Posterior Predictive Checks]{Plant-animal dichotomy, Grouping 1 (7 functional types). Posterior Predictive Checks performed with the stochastic formulation of the Lotka-Volterra-Ricker model shown in Eqn. \ref{LVR_Matrix_form} fitted to the community time series of the plankton community. Blue dots \textcolor{blue}{$\bullet$} denote the weekly measured biomass for each functional type, and red lines \textcolor{red}{{\Huge -}} denote the posterior predicted average of 3000 synthetic biomass time series for each functional type. Red shaded regions contain the 90\% HDI of the posterior predictions for each type.}
+	\label{fig:PPC_TS_fullplot_nonmixo1}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{../figs/bayes_factors_nonmixo_1.pdf}
+	\caption[Matrix of Bayes factors]{Plant-animal dichotomy, Grouping 1 (7 functional types). Matrix of Bayes factors of inter-type interactions in matrix $ \mathbf{A} $, colored according to the \citep{Kass1995} scale. Colored positions in the matrix refer to the degree of support in the posterior distribution for each inter-type interaction.}
+	\label{fig:bayes_factors_nonmixo_1}
+\end{figure}
+
+\newpage
+
+\subsection*{Results for the plant-animal dichotomy -- Grouping 2 (7 functional types)}
+
+In this alternative classification, generalist non-constitutive mixotrophs (GNCMs) are merged with microzooplankton, while specialist non-constitutive mixotrophs (SNCMs) and micro-constitutive mixotrophs (MicroCMs) are merged with diatoms into a single microautotroph category. This yields 7 functional types.\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{../figs/Interaction_networks_wlegend_nonmixo_2.pdf}
+	\caption[Network of posterior probability of interactions and interactions]{\footnotesize Plant-animal dichotomy, Grouping 2 (7 functional types). In \textbf{A}, network of posterior probability of interactions, constructed with the marginal probabilities of interactions across the ensemble of posterior networks explored by the SSVS algorithm. Green arrows (edges) indicate the direction of the effect and its magnitude (thickness), from 0 to 1. In \textbf{B}, network of interactions as expressed in the $\alpha$-matrix. These links measure the direct impact of the average species \textit{j} individual on species \textit{i}’s growth rate, relative to \textit{i}’s effect on its own growth rate (\citealp{Novak2016}). Interactions are depicted as directed arrows. In this figure, blue arrows denote a negative effect of the $\alpha_{ij}$, while red arrows denote a positive impact; arrow thickness depicts the relative magnitude of the effect. Note that the posterior values are given for the average of the posterior evaluated at the slab.}
+	\label{fig:Interaction_networks_wlegend_nonmixo_2}
+	% \setfloatalignment{b}  %b/t
+	% \forceversofloat  % \forcerectofloat
+\end{figure}
+
+\newpage
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../figs/Wrapped_stability_nonmixo_2.pdf}
+	\caption[Posterior probability of stability and feasibility]{Plant-animal dichotomy, Grouping 2 (7 functional types). In (\textbf{a}), the posterior eigenvalues of the Jacobian \ref{LVR_Jacobian} matrix are shown in the unit circle of the complex plane. The probability of stability is the fraction of eigenvalues with modulus strictly smaller than 1 in the posterior distribution. In (\textbf{b}), the posterior distribution of each component of the equilibrium vector $ \mathbf{N}^* $ is shown for each functional group; for comparison, the MAP estimate for the carrying capacities are shown as red circles. The probability of feasibility is the fraction of posterior estimates of the equilibrium vector that are strictly positive. In these groupings, non-constitutive mixotrophs are merged with microzooplankton and/or microautotrophs (see text for details).}
+	\label{fig:Wrapped_stability_nonmixo_2}
+	% \setfloatalignment{b}  %b/t
+	% \forceversofloat  % \forcerectofloat
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{../figs/PPC_TS_fullplot_nonmixo2.pdf}
+	\caption[Posterior Predictive Checks]{Plant-animal dichotomy, Grouping 2 (7 functional types). Posterior Predictive Checks performed with the stochastic formulation of the Lotka-Volterra-Ricker model shown in Eqn. \ref{LVR_Matrix_form} fitted to the community time series of the plankton community. Blue dots \textcolor{blue}{$\bullet$} denote the weekly measured biomass for each functional type, and red lines \textcolor{red}{{\Huge -}} denote the posterior predicted average of 3000 synthetic biomass time series for each functional type. Red shaded regions contain the 90\% HDI of the posterior predictions for each type.}
+	\label{fig:PPC_TS_fullplot_nonmixo2}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{../figs/bayes_factors_nonmixo_2.pdf}
+	\caption[Matrix of Bayes factors]{Plant-animal dichotomy, Grouping 2 (7 functional types). Matrix of Bayes factors of inter-type interactions in matrix $ \mathbf{A} $, colored according to the \citep{Kass1995} scale. Colored positions in the matrix refer to the degree of support in the posterior distribution for each inter-type interaction.}
+	\label{fig:bayes_factors_nonmixo_2}
+\end{figure}
+
+\newpage
+
+%%% Add this line AFTER all your figures and tables
+\FloatBarrier
+
+
+\bibliographystyle{apalike}
+\bibliography{biblio}
+
+\end{document}

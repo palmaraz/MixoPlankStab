@@ -1,0 +1,1086 @@
+---
+title: "Mixotrophic interactions drive a complex marine food web to the edge of instability"
+subtitle: "Bayesian LVR-SSVS analysis pipeline"
+author: "Pablo Almaraz, Suzana G. Leles, David García-Callejas, Oscar Godoy"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: readable
+    highlight: tango
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+    number_sections: true
+    code_folding: show
+    fig_width: 10
+    fig_height: 7
+params:
+  refit_model: false
+  save_figs: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.align  = "center",
+  out.width  = "90%",
+  cache      = TRUE,
+  cache.lazy = FALSE
+)
+options(digits = 4)
+```
+
+# Setup
+
+## Packages
+
+```{r packages}
+if (!require(pak, quietly = TRUE)) install.packages("pak")
+# pak::pak(c(
+#   "data.table", "imputeTS", "ggridges", "viridis", "expm", "plyr", "dplyr",
+#   "tidyverse", "runjags", "coda", "bayestestR", "bayesplot",
+#   "patchwork", "psych", "MASS", "mvtnorm", "qgraph", "ggmcmc", "png",
+#   "foreach", "doParallel", "figpatch", "ggpubr", "reshape2"
+# ), ask = FALSE)
+
+suppressPackageStartupMessages({
+  library(data.table); library(imputeTS); library(ggridges); library(viridis)
+  library(expm); library(plyr); library(dplyr); 
+  library(tidyverse); library(runjags); library(coda)
+  library(bayestestR); library(bayesplot); library(patchwork)
+  library(psych); library(MASS); library(mvtnorm); library(qgraph)
+  library(ggmcmc); library(png); library(foreach); library(doParallel)
+  library(figpatch); library(ggpubr); library(reshape2)
+})
+```
+
+```{r theme-selector, echo=FALSE}
+htmltools::tags$style(htmltools::HTML("
+.theme-selector-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 9999;
+  width: 172px;
+  height: 50px;
+  padding: 10px;
+}
+.theme-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.7);
+  padding: 6px 12px;
+  border-radius: 25px;
+  font-size: 13px;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: opacity 0.4s ease;
+}
+.theme-selector-container:not(:hover) .theme-selector.autohide {
+  opacity: 0;
+}
+.theme-selector select {
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+#code-folding-buttons, .code-folding-btn, .btn-group.pull-right {
+  margin-top: 45px !important;
+}
+body.theme-pure-dark { background-color: #0d1117 !important; color: #c9d1d9 !important; }
+body.theme-pure-dark .main-container, body.theme-pure-dark .container-fluid, body.theme-pure-dark #TOC, body.theme-pure-dark .tocify, body.theme-pure-dark .tocify ul, body.theme-pure-dark .tocify li, body.theme-pure-dark .list-group-item { background-color: #0d1117 !important; border-color: #30363d !important; color: #c9d1d9 !important; }
+body.theme-pure-dark h1, body.theme-pure-dark h2, body.theme-pure-dark h3, body.theme-pure-dark h4, body.theme-pure-dark h5, body.theme-pure-dark h6 { color: #58a6ff !important; }
+body.theme-pure-dark a { color: #58a6ff !important; }
+body.theme-pure-dark code { background-color: #161b22 !important; color: #79c0ff !important; }
+body.theme-pure-dark pre { background-color: #161b22 !important; border-color: #30363d !important; }
+body.theme-pure-dark pre code { color: #c9d1d9 !important; }
+body.theme-pure-dark .tocify .active, body.theme-pure-dark .list-group-item.active { background-color: #21262d !important; color: #58a6ff !important; }
+body.theme-pure-dark table { background-color: #0d1117 !important; color: #c9d1d9 !important; }
+body.theme-pure-dark th { background-color: #161b22 !important; border-color: #30363d !important; }
+body.theme-pure-dark td { border-color: #30363d !important; }
+body.theme-pure-dark blockquote { background-color: #161b22 !important; border-left-color: #58a6ff !important; color: #8b949e !important; }
+body.theme-pure-dark .MathJax { color: #c9d1d9 !important; }
+
+body.theme-midnight { background-color: #1a1a2e !important; color: #eaeaea !important; }
+body.theme-midnight .main-container, body.theme-midnight .container-fluid, body.theme-midnight #TOC, body.theme-midnight .tocify, body.theme-midnight .tocify ul, body.theme-midnight .tocify li, body.theme-midnight .list-group-item { background-color: #1a1a2e !important; border-color: #404060 !important; color: #eaeaea !important; }
+body.theme-midnight h1, body.theme-midnight h2, body.theme-midnight h3, body.theme-midnight h4, body.theme-midnight h5, body.theme-midnight h6 { color: #82aaff !important; }
+body.theme-midnight a { color: #c792ea !important; }
+body.theme-midnight code { background-color: #2d2d4a !important; color: #c3e88d !important; }
+body.theme-midnight pre { background-color: #2d2d4a !important; border-color: #404060 !important; }
+body.theme-midnight pre code { color: #eaeaea !important; }
+body.theme-midnight .tocify .active, body.theme-midnight .list-group-item.active { background-color: #0f3460 !important; color: #82aaff !important; }
+body.theme-midnight table { background-color: #1a1a2e !important; color: #eaeaea !important; }
+body.theme-midnight th { background-color: #16213e !important; border-color: #404060 !important; }
+body.theme-midnight td { border-color: #404060 !important; }
+body.theme-midnight blockquote { background-color: #16213e !important; border-left-color: #82aaff !important; color: #c0c0c0 !important; }
+body.theme-midnight .MathJax { color: #eaeaea !important; }
+
+body.theme-dracula { background-color: #282a36 !important; color: #f8f8f2 !important; }
+body.theme-dracula .main-container, body.theme-dracula .container-fluid, body.theme-dracula #TOC, body.theme-dracula .tocify, body.theme-dracula .tocify ul, body.theme-dracula .tocify li, body.theme-dracula .list-group-item { background-color: #282a36 !important; border-color: #44475a !important; color: #f8f8f2 !important; }
+body.theme-dracula h1, body.theme-dracula h2, body.theme-dracula h3, body.theme-dracula h4, body.theme-dracula h5, body.theme-dracula h6 { color: #bd93f9 !important; }
+body.theme-dracula a { color: #ff79c6 !important; }
+body.theme-dracula code { background-color: #44475a !important; color: #50fa7b !important; }
+body.theme-dracula pre { background-color: #1e1f29 !important; border-color: #44475a !important; }
+body.theme-dracula pre code { color: #f8f8f2 !important; }
+body.theme-dracula .tocify .active, body.theme-dracula .list-group-item.active { background-color: #44475a !important; color: #ff79c6 !important; }
+body.theme-dracula table { background-color: #282a36 !important; color: #f8f8f2 !important; }
+body.theme-dracula th { background-color: #44475a !important; border-color: #6272a4 !important; }
+body.theme-dracula td { border-color: #44475a !important; }
+body.theme-dracula blockquote { background-color: #44475a !important; border-left-color: #bd93f9 !important; color: #f8f8f2 !important; }
+body.theme-dracula .MathJax { color: #f8f8f2 !important; }
+
+body.theme-solarized { background-color: #002b36 !important; color: #839496 !important; }
+body.theme-solarized .main-container, body.theme-solarized .container-fluid, body.theme-solarized #TOC, body.theme-solarized .tocify, body.theme-solarized .tocify ul, body.theme-solarized .tocify li, body.theme-solarized .list-group-item { background-color: #002b36 !important; border-color: #073642 !important; color: #839496 !important; }
+body.theme-solarized h1, body.theme-solarized h2, body.theme-solarized h3, body.theme-solarized h4, body.theme-solarized h5, body.theme-solarized h6 { color: #268bd2 !important; }
+body.theme-solarized a { color: #2aa198 !important; }
+body.theme-solarized code { background-color: #073642 !important; color: #b58900 !important; }
+body.theme-solarized pre { background-color: #073642 !important; border-color: #586e75 !important; }
+body.theme-solarized pre code { color: #839496 !important; }
+body.theme-solarized .tocify .active, body.theme-solarized .list-group-item.active { background-color: #073642 !important; color: #2aa198 !important; }
+body.theme-solarized table { background-color: #002b36 !important; color: #839496 !important; }
+body.theme-solarized th { background-color: #073642 !important; border-color: #586e75 !important; }
+body.theme-solarized td { border-color: #073642 !important; }
+body.theme-solarized blockquote { background-color: #073642 !important; border-left-color: #268bd2 !important; color: #93a1a1 !important; }
+body.theme-solarized .MathJax { color: #839496 !important; }
+
+body.theme-nord { background-color: #2e3440 !important; color: #d8dee9 !important; }
+body.theme-nord .main-container, body.theme-nord .container-fluid, body.theme-nord #TOC, body.theme-nord .tocify, body.theme-nord .tocify ul, body.theme-nord .tocify li, body.theme-nord .list-group-item { background-color: #2e3440 !important; border-color: #3b4252 !important; color: #d8dee9 !important; }
+body.theme-nord h1, body.theme-nord h2, body.theme-nord h3, body.theme-nord h4, body.theme-nord h5, body.theme-nord h6 { color: #88c0d0 !important; }
+body.theme-nord a { color: #81a1c1 !important; }
+body.theme-nord code { background-color: #3b4252 !important; color: #a3be8c !important; }
+body.theme-nord pre { background-color: #3b4252 !important; border-color: #4c566a !important; }
+body.theme-nord pre code { color: #d8dee9 !important; }
+body.theme-nord .tocify .active, body.theme-nord .list-group-item.active { background-color: #3b4252 !important; color: #88c0d0 !important; }
+body.theme-nord table { background-color: #2e3440 !important; color: #d8dee9 !important; }
+body.theme-nord th { background-color: #3b4252 !important; border-color: #4c566a !important; }
+body.theme-nord td { border-color: #3b4252 !important; }
+body.theme-nord blockquote { background-color: #3b4252 !important; border-left-color: #88c0d0 !important; color: #e5e9f0 !important; }
+body.theme-nord .MathJax { color: #d8dee9 !important; }
+
+body.theme-monokai { background-color: #272822 !important; color: #f8f8f2 !important; }
+body.theme-monokai .main-container, body.theme-monokai .container-fluid, body.theme-monokai #TOC, body.theme-monokai .tocify, body.theme-monokai .tocify ul, body.theme-monokai .tocify li, body.theme-monokai .list-group-item { background-color: #272822 !important; border-color: #3e3d32 !important; color: #f8f8f2 !important; }
+body.theme-monokai h1, body.theme-monokai h2, body.theme-monokai h3, body.theme-monokai h4, body.theme-monokai h5, body.theme-monokai h6 { color: #f92672 !important; }
+body.theme-monokai a { color: #66d9ef !important; }
+body.theme-monokai code { background-color: #3e3d32 !important; color: #a6e22e !important; }
+body.theme-monokai pre { background-color: #1e1f1c !important; border-color: #3e3d32 !important; }
+body.theme-monokai pre code { color: #f8f8f2 !important; }
+body.theme-monokai .tocify .active, body.theme-monokai .list-group-item.active { background-color: #3e3d32 !important; color: #f92672 !important; }
+body.theme-monokai table { background-color: #272822 !important; color: #f8f8f2 !important; }
+body.theme-monokai th { background-color: #3e3d32 !important; border-color: #75715e !important; }
+body.theme-monokai td { border-color: #3e3d32 !important; }
+body.theme-monokai blockquote { background-color: #3e3d32 !important; border-left-color: #f92672 !important; color: #f8f8f2 !important; }
+body.theme-monokai .MathJax { color: #f8f8f2 !important; }
+"))
+
+htmltools::tags$div(class = "theme-selector-container",
+  htmltools::tags$div(class = "theme-selector", id = "theme-selector",
+    htmltools::tags$select(id = "theme-select", onchange = "changeTheme(this.value)",
+      htmltools::tags$option(value = "light", htmltools::HTML("&#9728;&#65039; Light")),
+      htmltools::tags$option(value = "theme-pure-dark", selected = "selected", htmltools::HTML("&#127761; Pure Dark")),
+      htmltools::tags$option(value = "theme-midnight", htmltools::HTML("&#127769; Midnight Blue")),
+      htmltools::tags$option(value = "theme-dracula", htmltools::HTML("&#129499; Dracula")),
+      htmltools::tags$option(value = "theme-solarized", htmltools::HTML("&#9728;&#65039; Solarized")),
+      htmltools::tags$option(value = "theme-nord", htmltools::HTML("&#10052;&#65039; Nord")),
+      htmltools::tags$option(value = "theme-monokai", htmltools::HTML("&#127912; Monokai"))
+    )
+  )
+)
+
+htmltools::tags$script(htmltools::HTML('
+var themes = ["light", "theme-pure-dark", "theme-midnight", "theme-dracula", "theme-solarized", "theme-nord", "theme-monokai"];
+function changeTheme(themeName) {
+  var body = document.body;
+  themes.forEach(function(t) { body.classList.remove(t); });
+  if (themeName !== "light") { body.classList.add(themeName); }
+  localStorage.setItem("selectedTheme", themeName);
+  setTimeout(function() {
+    var selector = document.getElementById("theme-selector");
+    if (selector) selector.classList.add("autohide");
+  }, 1000);
+}
+document.addEventListener("DOMContentLoaded", function() {
+  var saved = localStorage.getItem("selectedTheme") || "theme-pure-dark";
+  var sel = document.getElementById("theme-select");
+  var selector = document.getElementById("theme-selector");
+  if (sel) {
+    sel.value = saved;
+    var body = document.body;
+    themes.forEach(function(t) { body.classList.remove(t); });
+    if (saved !== "light") body.classList.add(saved);
+  }
+  setTimeout(function() {
+    if (selector) selector.classList.add("autohide");
+  }, 2000);
+});
+'))
+```
+
+## Configuration
+
+```{r config}
+REFIT_MODEL <- params$refit_model
+SAVE_FIGS   <- params$save_figs
+
+seed <- 972346
+set.seed(seed)
+
+# Dual-save helper: writes a figure to output/figs/ and manuscript/figs/
+save_fig <- function(plot, name, width = 10, height = 7, subdir = NULL) {
+  if (!SAVE_FIGS) return(invisible(NULL))
+  out_path <- if (!is.null(subdir)) file.path("output", subdir, "figs") else "output/figs"
+  ms_path  <- "manuscript/figs"
+  dir.create(out_path, recursive = TRUE, showWarnings = FALSE)
+  dir.create(ms_path,  recursive = TRUE, showWarnings = FALSE)
+  ggsave(file.path(out_path, name), plot, width = width, height = height, limitsize = FALSE)
+  if (is.null(subdir))
+    ggsave(file.path(ms_path, name), plot, width = width, height = height, limitsize = FALSE)
+}
+
+# Dual-save for base-R plots via pdf()
+save_pdf <- function(name, expr, width = 10, height = 10, subdir = NULL) {
+  if (!SAVE_FIGS) return(invisible(NULL))
+  out_path <- if (!is.null(subdir)) file.path("output", subdir, "figs") else "output/figs"
+  ms_path  <- "manuscript/figs"
+  dir.create(out_path, recursive = TRUE, showWarnings = FALSE)
+  pdf(file.path(out_path, name), width = width, height = height, paper = "special")
+  eval(expr); dev.off()
+  if (is.null(subdir)) {
+    pdf(file.path(ms_path, name), width = width, height = height, paper = "special")
+    eval(expr); dev.off()
+  }
+}
+```
+
+## Helper functions
+
+These encapsulate repeated operations across the three community groupings, keeping the analytical logic in one place.
+
+```{r helpers}
+source("code/functions.R")
+
+# --- Kalman-ARIMA imputation for a tibble with potential NAs -----------------
+impute_kalman <- function(df, save_dir = "output/imputation") {
+  dir.create(save_dir, recursive = TRUE, showWarnings = FALSE)
+  for (t in seq_len(ncol(df))) {
+    if (!any(is.na(df[[t]]))) next
+    filled <- imputeTS::na_kalman(
+      df[, t], model = arima(df[, t], order = c(12, 1, 0))$model, smooth = TRUE)
+    filled[] <- lapply(filled, function(x) pmax(x, 0))
+    if (SAVE_FIGS) {
+      ggplot_na_imputations(x_with_na = df[, t], x_with_imputations = filled,
+        xlab = "Time", ylab = colnames(df[t]),
+        title = "Kalman-filtered seasonal ARIMA imputation")
+      ggsave(file.path(save_dir, paste0(colnames(df[t]), "_imputed.pdf")),
+             width = 8, height = 6)
+    }
+    df[, t] <- filled
+  }
+  df
+}
+
+# --- Stability computation loop ---------------------------------------------
+# Returns a list with stability_measures, EqAbund, Eigenvals, jacobi_mat, NEM
+compute_stability <- function(post_vars, n_species, dt_vec) {
+  alpha_draws <- dplyr::select(post_vars, starts_with("alpha"))
+  k_draws     <- dplyr::select(post_vars, starts_with("k"))
+  r_draws     <- dplyr::select(post_vars, starts_with("r"))[, 1:n_species]
+  n <- nrow(post_vars)
+
+  Res   <- rep(NA_real_, n)
+  React <- rep(NA_real_, n)
+  SSS   <- rep(NA_real_, n)
+  Eig   <- matrix(NA, n, n_species)
+  EqA   <- matrix(NA, n, n_species)
+  Jmat  <- matrix(NA, n, n_species^2)
+  NEM   <- matrix(NA, n, n_species^2)
+  dt_med <- median(dt_vec)
+
+  milestones <- round(n * c(0.25, 0.50, 0.75, 1.00))
+  t0 <- proc.time()
+  for (j in seq_len(n)) {
+    A <- matrix(as.numeric(alpha_draws[j, ]), n_species, n_species)
+    k <- as.numeric(k_draws[j, ])
+    r <- as.numeric(r_draws[j, ])
+    EqA[j, ] <- solve(A, -k)
+
+    if (all(EqA[j, ] >= 0)) {
+      J <- diag(n_species) + dt_med * ((r / k) * A * pmax(EqA[j, ], 0))
+      Jmat[j, ] <- as.vector(J)
+      Eig[j, ]  <- eigen(J)$values
+      Res[j]    <- 1 / max(abs(Re(Eig[j, ])))
+      React[j]  <- log(max(Mod(eigen(t(J) %*% J, only.values = TRUE)$values)))
+      I_kron    <- diag(n_species) %x% diag(n_species)
+      SSS[j]    <- -log(1 - (norm(MASS::ginv(I_kron - J %x% J), "2"))^-1)
+      NEM[j, ]  <- -MASS::ginv(A)
+    }
+    if (j %in% milestones)
+      cat(sprintf("  %3d%% completed in %.1f sec\n",
+                  round(100 * j / n), (proc.time() - t0)[3]))
+  }
+
+  stab <- as_tibble(cbind(Res, React, SSS))
+  colnames(stab) <- c("Resilience", "Reactivity", "Stochastic structural stability")
+
+  list(stability_measures = stab, EqAbund = EqA, Eigenvals = Eig,
+       jacobi_mat = Jmat, NEM = NEM, k_draws = k_draws, r_draws = r_draws)
+}
+
+# --- Environmental effects ridgeplot -----------------------------------------
+plot_env_ridge <- function(env_eff_array, var_name, title, palette_opt,
+                           xlim = c(-0.3, 0.25)) {
+  ggplot(reshape2::melt(env_eff_array[, , var_name]),
+         aes(x = value, y = reorder(Var2, desc(Var2)), fill = after_stat(x))) +
+    geom_density_ridges_gradient(scale = 1.5, rel_min_height = 0.01) +
+    geom_vline(xintercept = 0) +
+    scale_x_continuous(limits = xlim) +
+    scale_fill_viridis(name = "Posterior\nvalue", option = palette_opt) +
+    labs(title = title, x = paste("Effect on growth rate")) +
+    theme_ridges(font_size = 13, grid = TRUE) +
+    theme(axis.title.y = element_blank(), plot.title = element_text(size = 18))
+}
+
+# --- Bayes factor computation ------------------------------------------------
+compute_bayes_factors <- function(g_alpha_mean_mat, prior_prob, n_species) {
+  BF <- matrix(sapply(g_alpha_mean_mat, function(x)
+    2 * log(x / (1 - x) * (1 - prior_prob) / prior_prob)
+  ), n_species, n_species)
+  diag(BF) <- 0
+  BF[BF == Inf] <- 2 * log(5e+50)
+  BF[BF < 0]    <- 0
+  BF
+}
+
+# --- Unit circle + feasibility wrapped figure --------------------------------
+plot_wrapped_stability <- function(eigenvals, resilience, eq_abund, k_draws,
+                                   names_vec, n_species) {
+  # Eigenvalue cloud
+  Re_eig <- reshape2::melt(Re(eigenvals), value.name = "Re")
+  Im_eig <- reshape2::melt(Im(eigenvals), value.name = "Im")
+  eig_df <- data.frame(Re = Re_eig$Re, Im = Im_eig$Im)
+  eig_df$Mod <- sqrt(eig_df$Re^2 + eig_df$Im^2)
+  prob_stab <- sum(eig_df$Mod < 1, na.rm = TRUE) / sum(!is.na(eig_df$Mod))
+
+  th <- seq(-pi, pi, length.out = 100)
+  uc <- data.frame(x = cos(th), y = sin(th))
+
+  p_uc <- ggplot(uc, aes(x, y)) + geom_path() +
+    geom_vline(xintercept = 0, lty = "dotted") +
+    geom_hline(yintercept = 0, lty = "dotted") +
+    geom_point(data = eig_df, aes(Re, Im), size = 0.5, col = "red") +
+    labs(x = "Real", y = "Imaginary") + theme_bw_cust +
+    ggtitle(paste0("Resilience: ",
+                   round(map_estimate(resilience)$MAP_Estimate, 3),
+                   " [", round(hdi(resilience, ci = .9)$CI_low, 3), ", ",
+                   round(hdi(resilience, ci = .9)$CI_high, 3), "] MAP, 90% HDI"),
+            paste0("P(dynamic stability) = ", round(prob_stab, 4)))
+
+  # Feasibility
+  eq_df <- as.data.frame(eq_abund)
+  colnames(eq_df) <- names_vec
+  n_loops <- nrow(eq_df)
+  prob_feas <- (n_loops - sum(apply(eq_df, 1, function(r) any(r < 0)))) / n_loops
+
+  k_map <- data.frame(variable = names_vec,
+                       value = map_estimate(k_draws)$MAP_Estimate)
+
+  p_feas <- ggplot(reshape2::melt(eq_df),
+                   aes(value, reorder(variable, desc(variable)), fill = after_stat(x))) +
+    geom_density_ridges_gradient(scale = 1.5, rel_min_height = 0.01) +
+    geom_vline(xintercept = 0) +
+    scale_x_continuous(limits = c(-1, 40)) +
+    scale_fill_viridis(name = expression(italic(N)^"*"), option = "viridis") +
+    geom_point(data = k_map, aes(col = "K"), size = 2) +
+    scale_color_manual(name = NULL, values = c(K = "brown"), labels = "Carrying capacity") +
+    labs(x = expression(mu * g ~ C ~ L^-1),
+         title = paste("P(feasibility) =", round(prob_feas, 3))) +
+    theme_ridges(font_size = 13, grid = TRUE) +
+    theme(axis.title.y = element_blank(), plot.title = element_text(size = 18, face = "plain"))
+
+  wrap_plots(p_uc, p_feas) + plot_annotation(tag_levels = "A", tag_suffix = ")")
+}
+
+# --- PPC time series assembly ------------------------------------------------
+# Builds a PPC data frame and list of per-type ggplots from posterior draws.
+# `biomass_df`: tibble with columns named as `names_display` (display names).
+# `time_vec`:   numeric vector of time points (e.g. data_full$Days_seq / 30).
+build_ppc <- function(post_vars, n_species, n_timesteps, n_loops,
+                      names_display, biomass_df, time_vec) {
+  ppc_raw <- dplyr::select(post_vars, starts_with("n_ppc"))
+  ppc_arr <- array(NA, dim = c(n_loops, n_timesteps, n_species))
+  for (j in seq_len(n_species))
+    ppc_arr[, , j] <- ppc_raw %>%
+      dplyr::select(param_glue("n_ppc[{t},{s}]", s = j, t = 1:n_timesteps)) %>%
+      as.matrix()
+  ppc_q <- apply(ppc_arr, 2:3, quantile, probs = c(.10, .50, .90), na.rm = TRUE)
+  ppc_df <- do.call(rbind, lapply(seq_len(n_species), function(l)
+    data.frame(Type = names_display[l], lo = ppc_q[1, , l], mid = ppc_q[2, , l],
+               hi = ppc_q[3, , l], obs = log(biomass_df[[names_display[l]]] + 1),
+               month = time_vec)))
+  plots <- ppc_df %>%
+    group_by(Type = factor(Type, levels = names_display)) %>%
+    group_map(~ ggplot(., aes(month, mid)) +
+      geom_line(col = "red") +
+      geom_ribbon(aes(ymin = lo, ymax = hi), fill = "red", alpha = .4) +
+      geom_point(aes(y = obs), col = "blue", size = .6) +
+      theme_classic() +
+      labs(x = "Month", y = expression(ln ~ mu*g ~ C ~ L^-1)) +
+      ggtitle(.y[[1]]))
+  list(df = ppc_df, plots = plots)
+}
+
+# --- Network figure assembly -------------------------------------------------
+# Builds the combined probability + alpha network figure for manuscript/figs/.
+build_network_figure <- function(alpha_draws, g_alpha_mean_mat, n_species,
+                                 sil_files, out_subdir, ms_name,
+                                 legend_png, legend_arrows_png) {
+  out_dir <- file.path("output", out_subdir, "figs")
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+  # Alpha network (spring layout)
+  pdf(file.path(out_dir, "alpha_spring.pdf"), width = 6, height = 6)
+  q_a <- qgraph(t(matrix(MAP_Slab(alpha_draws, MAP = FALSE), n_species, n_species)),
+    bg = "transparent", layout = "spring", images = sil_files,
+    borders = FALSE, labels = FALSE, diag = TRUE,
+    posCol = "red", negCol = "blue", palette = "colorblind")
+  dev.off()
+  png(file.path(out_dir, "alpha_spring.png"), width = 3000, height = 3000)
+  plot(q_a); dev.off()
+
+  # Probability of interaction network
+  pdf(file.path(out_dir, "Prob_of_interaction.pdf"), width = 7, height = 7)
+  q_p <- qgraph(t(g_alpha_mean_mat), bg = "transparent", layout = "spring",
+    images = sil_files, borders = FALSE, labels = FALSE, diag = TRUE,
+    posCol = "green4", palette = "colorblind")
+  dev.off()
+  png(file.path(out_dir, "Prob_of_interaction.png"), width = 3000, height = 3000)
+  plot(q_p); dev.off()
+
+  # Combined figure for manuscript
+  p_prob <- fig_lab(fig(file.path(out_dir, "Prob_of_interaction.png")),
+                    lab = "A. Posterior probability of interaction", pos = "top", size = 15)
+  p_alpha <- fig_lab(fig(file.path(out_dir, "alpha_spring.png")),
+                     lab = "B. Posterior network of interactions", pos = "top", size = 15)
+  p_leg  <- fig(legend_png)
+  p_larr <- fig(legend_arrows_png)
+
+  combined <- wrap_plots((p_prob / p_alpha) | (p_leg / p_larr))
+  pdf(file.path("manuscript/figs", ms_name), width = 11, height = 10)
+  print(combined); dev.off()
+  pdf(file.path(out_dir, ms_name), width = 11, height = 10)
+  print(combined); dev.off()
+  invisible(combined)
+}
+
+# --- Bayes factor heatmap ----------------------------------------------------
+gradient_color <- colorRampPalette(
+  c("purple4", "purple1", "blue", "yellow2", "orange2", "red3"))(1000)
+
+plot_bayes_heatmap <- function(bf_mat, n_species) {
+  df <- reshape2::melt(t(bf_mat)) %>% mutate(color = ifelse(value > 1, value, NA))
+  ggplot(df, aes(Var1, Var2, fill = value)) +
+    geom_raster() +
+    scale_fill_gradientn(name = "BF (Kass-Raftery)", colors = gradient_color,
+                         limits = range(df$color, na.rm = TRUE), na.value = "white") +
+    scale_x_continuous(breaks = seq_len(n_species), position = "top") +
+    scale_y_reverse(breaks = seq_len(n_species)) +
+    theme_bw() + theme(panel.grid = element_blank()) +
+    labs(x = "Functional type", y = "Functional type")
+}
+```
+
+# Data processing
+
+Load the raw L4 time-series data and merge all monitoring sources into a single data frame.
+
+```{r data-processing}
+source("code/process_data.R")
+data_full <- data_full[-1, ]  # first row lacks abundance
+```
+
+# Environmental data
+
+Missing environmental values are filled with Kalman-filtered seasonal ARIMA models. Inorganic nutrients (nitrate, silicate, phosphate) are combined into a single index to reduce collinearity.
+
+```{r env-data}
+env_raw <- as_tibble(data_full[, 4:10])
+colnames(env_raw) <- c("Temperature", "MLD", "Chlorophyll",
+                        "Nitrate", "Ammoniun", "Silicate", "Phosphate")
+env_raw <- impute_kalman(env_raw)
+env_raw <- env_raw %>% mutate(Nutrients = Nitrate + Phosphate + Silicate)
+```
+
+```{r env-corr, fig.cap="Cross-correlations among environmental covariates at 10 m depth."}
+pairs.panels(env_raw[, c("Temperature", "MLD", "Chlorophyll", "Ammoniun", "Nutrients")],
+             method = "pearson", hist.col = "#00AFBB", density = TRUE, ellipses = TRUE)
+save_pdf("Environmental_data.pdf", quote(
+  pairs.panels(env_raw[, c("Temperature", "MLD", "Chlorophyll", "Ammoniun", "Nutrients")],
+               method = "pearson", hist.col = "#00AFBB", density = TRUE, ellipses = TRUE)))
+```
+
+```{r env-standardise}
+env_data <- as.matrix(scale(log(
+  env_raw[, c("Temperature", "MLD", "Chlorophyll", "Ammoniun", "Nutrients")] + 1
+)))[, 1:5]
+```
+
+# Mixotrophic web (10 functional types) {.tabset}
+
+## Biomass preparation
+
+```{r mixo-biomass}
+ft_names <- c("bact", "picop", "nanozoo", "nanocms", "diatoms",
+              "microcms", "gncms", "sncms", "microzoo", "mesozoo")
+Names <- c("Bacteria", "Picoplankton", "Nanozooplankton", "NanoCMs",
+           "Diatoms", "MicroCMs", "GNCMs", "SNCMs",
+           "Microzooplankton", "Mesozooplankton")
+
+data_mixo <- as_tibble(data_full[, ft_names])
+colnames(data_mixo) <- Names
+data_mixo <- impute_kalman(data_mixo)
+
+NSpecies   <- ncol(data_mixo)
+NTimeSteps <- nrow(data_mixo)
+
+data_list <- list(
+  NSpecies = NSpecies, NTimeSteps = NTimeSteps, NEnvVar = ncol(env_data),
+  dt = data_full$dt / 7, n = as.matrix(log(data_mixo + 1)),
+  env_data = env_data,
+  est.k = colMeans(as.matrix(data_mixo)),
+  est.var.k = colVar(as.matrix(data_mixo)))
+```
+
+## Model fitting
+
+The LVR-SSVS model is fitted via MCMC in JAGS. The spike-and-slab prior on interaction coefficients simultaneously estimates the network topology and interaction strengths. Three parallel chains are run with 10 000 adaptation steps, 40 000 burn-in, and 1 000 posterior samples (thinned by 20).
+
+```{r mixo-fit}
+parameters <- c("inclusion.alpha", "prior_for_inclusion", "alpha",
+                "r", "k", "env_effect", "Sigma", "Env_synchrony",
+                "n_ppc", "resid", "loglik_n")
+
+inits_LVR <- function() list(
+  prior_for_inclusion = rbeta(1, 2, 8),
+  r = runif(NSpecies, 0, 1),
+  k = pmax(rnorm(NSpecies, colMeans(as.matrix(data_mixo), na.rm = TRUE),
+                  sqrt(colVar(as.matrix(data_mixo)))), 0.1),
+  env_effect = replicate(ncol(env_data), rnorm(NSpecies, 0, 0.1)),
+  Tau = diag(0.1, NSpecies), .RNG.seed = seed)
+
+if (REFIT_MODEL) {
+  runjags.options(inits.warning = FALSE, rng.warning = FALSE,
+                  blockignore.warning = FALSE, blockcombine.warning = FALSE,
+                  nodata.warning = FALSE, silent.jags = FALSE, silent.runjags = FALSE)
+  t0 <- proc.time()
+  LVR_Gibbs_SSVS <- run.jags(
+    data = data_list, inits = inits_LVR, monitor = parameters,
+    model = read.jagsfile("code/LVR_SSVS_JAGS.R"),
+    n.chains = 3, adapt = 10000, burnin = 40000,
+    sample = 1000, thin = 20, method = "parallel", modules = "glm",
+    keep.jags.files = "output/runjagsfilesLVR_SSVS", summarise = FALSE)
+  message("Fitting took ", round((proc.time() - t0)[3] / 3600, 2), " hours.")
+  post_vars <- as.data.frame(combine.mcmc(as.mcmc.list(LVR_Gibbs_SSVS)))
+  nloops <- nrow(post_vars)
+  save(LVR_Gibbs_SSVS, post_vars, nloops, file = "output/LVR_Gibbs_SSVS.RData")
+} else {
+  load("output/LVR_Gibbs_SSVS.RData")
+  post_vars <- as.data.frame(combine.mcmc(as.mcmc.list(LVR_Gibbs_SSVS)))
+  nloops <- nrow(post_vars)
+}
+```
+
+## Interaction matrix
+
+```{r mixo-alpha}
+alpha <- dplyr::select(post_vars, starts_with("alpha"))
+alpha_mean_matrix <- matrix(colMeans(alpha), NSpecies, NSpecies)
+
+prior_incl <- map_estimate(dplyr::select(post_vars, starts_with("prior_for_inclusion")))
+g_alpha    <- dplyr::select(post_vars, starts_with("inclusion.alpha"))
+g_alpha_mean <- matrix(colMeans(g_alpha), NSpecies, NSpecies)
+```
+
+### Bayes factors
+
+```{r mixo-bf, fig.cap="Bayes factors for inter-type interactions (Kass-Raftery scale)."}
+BF <- compute_bayes_factors(g_alpha_mean, prior_incl$MAP_Estimate, NSpecies)
+p_bf <- plot_bayes_heatmap(BF, NSpecies)
+p_bf
+save_fig(p_bf, "bayes_factors.pdf", width = 7, height = 5)
+```
+
+## Posterior predicted time series
+
+```{r mixo-ppc, fig.height=13, fig.cap="Posterior predicted checks for all 10 functional types."}
+Obs_mean_ln <- reshape2::melt(log(data_full[, ft_names] + 1), value.name = "Obs_mean")
+
+n_ppc_mcmc <- dplyr::select(post_vars, starts_with("n_ppc"))
+ppc_mcmc   <- array(NA, dim = c(nloops, NTimeSteps, NSpecies))
+for (j in seq_len(NSpecies))
+  ppc_mcmc[, , j] <- n_ppc_mcmc %>%
+    dplyr::select(param_glue("n_ppc[{t},{s}]", s = j, t = 1:NTimeSteps)) %>%
+    as.matrix()
+
+ppc_q <- apply(ppc_mcmc, 2:3, quantile, probs = c(.10, .50, .90), na.rm = TRUE)
+
+ppc_df <- do.call(rbind, lapply(seq_len(NSpecies), function(l)
+  data.frame(Type = Names[l], lo = ppc_q[1, , l], mid = ppc_q[2, , l],
+             hi = ppc_q[3, , l], obs = log(data_full[[ft_names[l]]] + 1),
+             month = data_full$Days_seq / 30)))
+
+ppc_ts_plots <- ppc_df %>%
+  group_by(Type = factor(Type, levels = Names)) %>%
+  group_map(~ ggplot(., aes(month, mid)) +
+    geom_line(col = "red") +
+    geom_ribbon(aes(ymin = lo, ymax = hi), fill = "red", alpha = .4) +
+    geom_point(aes(y = obs), col = "blue", size = .6) +
+    theme_classic() +
+    labs(x = "Month", y = expression(ln ~ mu*g ~ C ~ L^-1)) +
+    ggtitle(.y[[1]]))
+
+PPC_full <- wrap_plots(ppc_ts_plots, ncol = 2) +
+  plot_annotation(title = "Posterior predicted time series")
+PPC_full
+save_fig(PPC_full, "PPC_TS_fullplot.pdf", width = 10, height = 13)
+```
+
+### Main-text figure (5 key types)
+
+```{r mixo-ppc-main, fig.height=10, fig.cap="Posterior predicted checks for the 5 interacting types."}
+file_sil <- paste0("data/silhouettes/", c("Bacteria", "Picoplankton",
+  "Nanozooplankton", "Nano-CMs", "Diatoms", "Micro-CMs", "GNCMs",
+  "SNCMs", "Microzooplankton", "Mesozooplankton"), ".png")
+
+key_idx <- c(3, 7, 8, 9, 10)  # Nanozoo, GNCMs, SNCMs, Microzoo, Mesozoo
+key_labels <- c("Nanozooplankton", "Strombidium (GNCMs)",
+                "Mesodinium (SNCMs)", "Microzooplankton", "Mesozooplankton")
+
+panels <- lapply(seq_along(key_idx), function(i) {
+  idx <- key_idx[i]
+  ppc_ts_plots[[idx]] + ggtitle(key_labels[i]) +
+    scale_y_continuous(expand = expansion(mult = c(0.05, 0.35))) +
+    inset_element(readPNG(file_sil[idx], native = TRUE),
+                  left = .78, bottom = .78, right = 1, top = 1)
+})
+
+PPC_main <- (panels[[1]] + panels[[2]]) /
+            (panels[[3]] + panels[[4]]) /
+            (panels[[5]] + plot_spacer()) +
+  plot_annotation(title = "Observed and posterior predicted time series",
+                  theme = theme(plot.title = element_text(size = 30)))
+PPC_main
+save_fig(PPC_main, "Main_timeseries.pdf", width = 10, height = 10)
+```
+
+## Stability analysis
+
+For each posterior draw the equilibrium $\mathbf{N}^* = -\mathbf{A}^{-1}\mathbf{K}$ is computed, and if feasible ($\mathbf{N}^* \geq 0$) the Jacobian is constructed to derive:
+
+- **Resilience** ($R_\infty$): inverse of the dominant eigenvalue modulus -- the asymptotic return rate to equilibrium.
+- **Reactivity** ($R_0$): log of the largest singular value of $\mathbf{J}^\top\mathbf{J}$ -- short-term amplification potential.
+- **Stochastic structural stability** ($\mathcal{I}_s$): minimal white-noise perturbation that destabilizes the system, derived from the Kronecker structure of the Jacobian.
+
+```{r mixo-stability}
+stab_mixo <- compute_stability(post_vars, NSpecies, data_list$dt)
+stab_measures_mixo <- stab_mixo$stability_measures
+```
+
+```{r mixo-stab-summary}
+knitr::kable(map_estimate(stab_measures_mixo), caption = "MAP estimates of stability metrics.")
+knitr::kable(hdi(as.mcmc(stab_measures_mixo), ci = .9), caption = "90% HDI of stability metrics.")
+cat("P(Reactivity > 0):", round(1 - p_direction(stab_measures_mixo$Reactivity)$pd, 3))
+```
+
+## Feasibility and dynamical stability
+
+```{r mixo-wrapped, fig.width=15, fig.height=7, fig.cap="Eigenvalue spectrum and equilibrium abundances."}
+p_wrap <- plot_wrapped_stability(stab_mixo$Eigenvals, stab_mixo$stability_measures$Resilience,
+                                  stab_mixo$EqAbund, stab_mixo$k_draws, Names, NSpecies)
+p_wrap
+save_fig(p_wrap, "Wrapped_stability.pdf", width = 15, height = 7)
+```
+
+## Environmental effects
+
+```{r mixo-env-effects, fig.width=14, fig.height=11, fig.cap="Posterior effects of environmental covariates on growth rates."}
+env_eff_mcmc <- dplyr::select(as.data.frame(post_vars), starts_with("env_effect"))
+env_eff <- array(NA, dim = c(nloops, NSpecies, ncol(env_data)))
+for (j in seq_len(ncol(env_data)))
+  env_eff[, , j] <- env_eff_mcmc %>%
+    dplyr::select(param_glue("env_effect[{ft},{ev}]", ev = j, ft = 1:NSpecies)) %>%
+    as.matrix()
+dimnames(env_eff) <- list(NULL, Names,
+                           c("Temperature", "MLD", "Chlorophyll", "Ammoniun", "Nutrients"))
+
+p_env <- (plot_env_ridge(env_eff, "Temperature", "Temperature", "viridis") +
+           plot_env_ridge(env_eff, "Nutrients", "Nutrients", "plasma", c(-.5, .25))) /
+  (plot_env_ridge(env_eff, "MLD", "Mixed-layer depth", "magma") +
+   plot_env_ridge(env_eff, "Ammoniun", "Ammonia", "cividis", c(-.2, .25)) +
+   plot_env_ridge(env_eff, "Chlorophyll", "Chlorophyll", "inferno"))
+p_env
+save_fig(p_env, "Environmental_effects.pdf", width = 14, height = 11)
+```
+
+## Network visualizations
+
+```{r mixo-networks, fig.width=11, fig.height=10, fig.cap="Interaction networks with plankton silhouettes."}
+# Interaction matrix network
+pdf("output/figs/alpha_spring.pdf", width = 6, height = 6)
+q_alpha <- qgraph(t(matrix(MAP_Slab(alpha, MAP = FALSE), NSpecies, NSpecies)),
+  bg = "transparent", layout = "spring", images = file_sil,
+  borders = FALSE, labels = FALSE, diag = TRUE,
+  posCol = "red", negCol = "blue", palette = "colorblind")
+dev.off()
+png("output/figs/alpha_spring.png", width = 3000, height = 3000)
+plot(q_alpha); dev.off()
+
+# Probability of interaction network
+pdf("output/figs/Prob_of_interaction.pdf", width = 7, height = 7)
+q_prob <- qgraph(t(g_alpha_mean), bg = "transparent", layout = "spring",
+  images = file_sil, borders = FALSE, labels = FALSE, diag = TRUE,
+  posCol = "green4", palette = "colorblind")
+dev.off()
+png("output/figs/Prob_of_interaction.png", width = 3000, height = 3000)
+plot(q_prob); dev.off()
+
+# Combined manuscript figure
+p_net <- wrap_plots(
+  (fig_lab(fig("output/figs/Prob_of_interaction.png"),
+           lab = "A. Posterior probability of interaction", pos = "top", size = 15) /
+   fig_lab(fig("output/figs/alpha_spring.png"),
+           lab = "B. Posterior network of interactions", pos = "top", size = 15)) |
+  (fig("output/figs/Network_legend.png") / fig("output/figs/Network_legend_arrows.png")))
+pdf("manuscript/figs/Interaction_networks_wlegend.pdf", width = 11, height = 10)
+p_net; dev.off()
+```
+
+## Environmental synchrony
+
+```{r mixo-sync, fig.cap="Inter-type environmental synchrony network."}
+Env_cov <- matrix(colMeans(dplyr::select(post_vars, starts_with("Env_synchrony")), na.rm = TRUE),
+                  NSpecies, NSpecies)
+qgraph(t(Env_cov), layout = "spring", bg = "transparent", images = file_sil,
+       borders = FALSE, labels = FALSE, diag = FALSE,
+       posCol = "red", negCol = "blue", palette = "colorblind")
+save_pdf("Env_cov_spring.pdf", quote(
+  qgraph(t(Env_cov), layout = "spring", bg = "transparent", images = file_sil,
+         borders = FALSE, labels = FALSE, diag = FALSE,
+         posCol = "red", negCol = "blue", palette = "colorblind")), width = 8, height = 8)
+```
+
+```{r mixo-save-workspace, eval=FALSE}
+save.image("output/Image_FullResults.RData")
+```
+
+# Plant-animal dichotomy -- Grouping 1 (7 types) {.tabset}
+
+GNCMs and SNCMs are merged with microzooplankton; MicroCMs are merged with diatoms into a single microautotroph compartment.
+
+## Biomass preparation
+
+```{r nm1-data}
+data_nm1 <- data_full %>%
+  mutate(microzoo = gncms + sncms + microzoo, microauto = diatoms + microcms) %>%
+  dplyr::select(-c(gncms, sncms, diatoms, microcms))
+
+ft_nm1 <- c("bact", "picop", "nanozoo", "nanocms", "microauto", "microzoo", "mesozoo")
+Names_nm1 <- c("Bacteria", "Picoplankton", "Nanozooplankton", "NanoCMs",
+               "Microautotrophs", "Microzooplankton", "Mesozooplankton")
+data_nm1 <- as_tibble(data_nm1[, ft_nm1]); colnames(data_nm1) <- Names_nm1
+data_nm1 <- impute_kalman(data_nm1, "output/nonmixo_1/imputation")
+
+NSpecies_nm1 <- ncol(data_nm1)
+env_nm1 <- env_data
+
+data_list_nm1 <- list(
+  NSpecies = NSpecies_nm1, NTimeSteps = NTimeSteps, NEnvVar = ncol(env_nm1),
+  dt = data_full$dt / 7, n = as.matrix(log(data_nm1 + 1)),
+  env_data = env_nm1, est.k = colMeans(as.matrix(data_nm1)),
+  est.var.k = colVar(as.matrix(data_nm1)))
+```
+
+## Model fitting
+
+```{r nm1-fit}
+inits_nm1 <- function() list(
+  prior_for_inclusion = rbeta(1, 2, 8),
+  r = runif(NSpecies_nm1, 0, 1),
+  k = pmax(rnorm(NSpecies_nm1, colMeans(as.matrix(data_nm1), na.rm = TRUE),
+                  sqrt(colVar(as.matrix(data_nm1)))), 0.1),
+  env_effect = replicate(ncol(env_nm1), rnorm(NSpecies_nm1, 0, 0.1)),
+  Tau = diag(0.1, NSpecies_nm1), .RNG.seed = seed)
+
+if (REFIT_MODEL) {
+  runjags.options(inits.warning = FALSE, rng.warning = FALSE,
+                  blockignore.warning = FALSE, blockcombine.warning = FALSE,
+                  nodata.warning = FALSE)
+  t0 <- proc.time()
+  LVR_nm1 <- run.jags(
+    data = data_list_nm1, inits = inits_nm1, monitor = parameters,
+    model = read.jagsfile("code/LVR_SSVS_JAGS.R"),
+    n.chains = 3, adapt = 10000, burnin = 40000,
+    sample = 1000, thin = 20, method = "parallel", modules = "glm",
+    keep.jags.files = "output/nonmixo_1/runjagsfiles", summarise = FALSE)
+  message("Grouping 1 took ", round((proc.time() - t0)[3] / 3600, 2), " h.")
+  post_vars_nm1 <- as.data.frame(combine.mcmc(as.mcmc.list(LVR_nm1)))
+  nloops_nm1 <- nrow(post_vars_nm1)
+  save(LVR_nm1, post_vars_nm1, nloops_nm1, file = "output/nonmixo_1/LVR_Gibbs_SSVS_nm1.RData")
+} else {
+  load("output/nonmixo_1/LVR_Gibbs_SSVS_nm1.RData")
+  post_vars_nm1 <- as.data.frame(combine.mcmc(as.mcmc.list(LVR_nm1)))
+  nloops_nm1 <- nrow(post_vars_nm1)
+}
+```
+
+## Interaction matrix
+
+```{r nm1-alpha}
+alpha_nm1 <- dplyr::select(post_vars_nm1, starts_with("alpha"))
+prior_nm1 <- map_estimate(dplyr::select(post_vars_nm1, starts_with("prior_for_inclusion")))
+g_alpha_nm1 <- dplyr::select(post_vars_nm1, starts_with("inclusion.alpha"))
+g_alpha_mean_nm1 <- matrix(colMeans(g_alpha_nm1), NSpecies_nm1, NSpecies_nm1)
+```
+
+### Bayes factors
+
+```{r nm1-bf, fig.cap="Bayes factors -- Grouping 1."}
+BF_nm1 <- compute_bayes_factors(g_alpha_mean_nm1, prior_nm1$MAP_Estimate, NSpecies_nm1)
+p_bf_nm1 <- plot_bayes_heatmap(BF_nm1, NSpecies_nm1)
+p_bf_nm1
+save_fig(p_bf_nm1, "bayes_factors_nonmixo_1.pdf", width = 7, height = 5)
+```
+
+## Posterior predicted time series
+
+```{r nm1-ppc, fig.height=10, fig.cap="Posterior predicted checks -- Grouping 1 (7 types)."}
+ppc_nm1 <- build_ppc(post_vars_nm1, NSpecies_nm1, NTimeSteps, nloops_nm1,
+                      Names_nm1, data_nm1, data_full$Days_seq / 30)
+PPC_nm1 <- wrap_plots(ppc_nm1$plots, ncol = 2) +
+  plot_annotation(title = "Posterior predicted time series -- Grouping 1")
+PPC_nm1
+save_fig(PPC_nm1, "PPC_TS_fullplot_nonmixo1.pdf", width = 10, height = 10, subdir = "nonmixo_1")
+if (SAVE_FIGS) ggsave("manuscript/figs/PPC_TS_fullplot_nonmixo1.pdf", PPC_nm1, width = 10, height = 10)
+```
+
+## Stability
+
+```{r nm1-stability}
+stab_nm1 <- compute_stability(post_vars_nm1, NSpecies_nm1, data_list_nm1$dt)
+stab_measures_nm1 <- stab_nm1$stability_measures
+knitr::kable(map_estimate(stab_measures_nm1), caption = "Grouping 1: MAP stability estimates.")
+```
+
+## Wrapped stability
+
+```{r nm1-wrapped, fig.width=15, fig.height=7, fig.cap="Eigenvalue spectrum and feasibility -- Grouping 1."}
+p_wrap_nm1 <- plot_wrapped_stability(stab_nm1$Eigenvals, stab_nm1$stability_measures$Resilience,
+                                      stab_nm1$EqAbund, stab_nm1$k_draws, Names_nm1, NSpecies_nm1)
+p_wrap_nm1
+save_fig(p_wrap_nm1, "Wrapped_stability_nonmixo_1.pdf", width = 15, height = 7)
+```
+
+## Network visualizations
+
+```{r nm1-networks, fig.width=11, fig.height=10, fig.cap="Interaction networks -- Grouping 1."}
+file_sil_nm1 <- c("data/silhouettes/Bacteria.png",
+                   "data/silhouettes/Picoplankton.png",
+                   "data/silhouettes/Nanozooplankton.png",
+                   "data/silhouettes/Nanoplankton.png",
+                   "data/silhouettes/Microautotrophs_Nonmixo_1.png",
+                   "data/silhouettes/Microzooplankton_Nonmixo_1.png",
+                   "data/silhouettes/Mesozooplankton.png")
+
+build_network_figure(alpha_nm1, g_alpha_mean_nm1, NSpecies_nm1,
+                     file_sil_nm1, "nonmixo_1",
+                     "Interaction_networks_wlegend_nonmixo_1.pdf",
+                     "output/nonmixo_1/figs/Network_legend_nonmixo1.png",
+                     "output/nonmixo_1/figs/Network_legend_arrows.png")
+```
+
+# Plant-animal dichotomy -- Grouping 2 (7 types) {.tabset}
+
+GNCMs are merged with microzooplankton; SNCMs and MicroCMs are merged with diatoms into microautotrophs.
+
+## Biomass preparation
+
+```{r nm2-data}
+data_nm2 <- data_full %>%
+  mutate(microzoo = gncms + microzoo, microauto = sncms + diatoms + microcms) %>%
+  dplyr::select(-c(gncms, sncms, diatoms, microcms))
+
+data_nm2 <- as_tibble(data_nm2[, ft_nm1]); colnames(data_nm2) <- Names_nm1
+data_nm2 <- impute_kalman(data_nm2, "output/nonmixo_2/imputation")
+
+data_list_nm2 <- list(
+  NSpecies = NSpecies_nm1, NTimeSteps = NTimeSteps, NEnvVar = ncol(env_data),
+  dt = data_full$dt / 7, n = as.matrix(log(data_nm2 + 1)),
+  env_data = env_data, est.k = colMeans(as.matrix(data_nm2)),
+  est.var.k = colVar(as.matrix(data_nm2)))
+```
+
+## Model fitting
+
+```{r nm2-fit}
+inits_nm2 <- function() list(
+  prior_for_inclusion = rbeta(1, 2, 8),
+  r = runif(NSpecies_nm1, 0, 1),
+  k = pmax(rnorm(NSpecies_nm1, colMeans(as.matrix(data_nm2), na.rm = TRUE),
+                  sqrt(colVar(as.matrix(data_nm2)))), 0.1),
+  env_effect = replicate(ncol(env_data), rnorm(NSpecies_nm1, 0, 0.1)),
+  Tau = diag(0.1, NSpecies_nm1), .RNG.seed = seed)
+
+if (REFIT_MODEL) {
+  t0 <- proc.time()
+  LVR_nm2 <- run.jags(
+    data = data_list_nm2, inits = inits_nm2, monitor = parameters,
+    model = read.jagsfile("code/LVR_SSVS_JAGS.R"),
+    n.chains = 3, adapt = 10000, burnin = 40000,
+    sample = 1000, thin = 20, method = "parallel", modules = "glm",
+    keep.jags.files = "output/nonmixo_2/runjagsfiles", summarise = FALSE)
+  message("Grouping 2 took ", round((proc.time() - t0)[3] / 3600, 2), " h.")
+  post_vars_nm2 <- as.data.frame(combine.mcmc(as.mcmc.list(LVR_nm2)))
+  nloops_nm2 <- nrow(post_vars_nm2)
+  save(LVR_nm2, post_vars_nm2, nloops_nm2, file = "output/nonmixo_2/LVR_Gibbs_SSVS_nm2.RData")
+} else {
+  load("output/nonmixo_2/LVR_Gibbs_SSVS_nm2.RData")
+  post_vars_nm2 <- as.data.frame(combine.mcmc(as.mcmc.list(LVR_nm2)))
+  nloops_nm2 <- nrow(post_vars_nm2)
+}
+```
+
+## Interaction matrix
+
+```{r nm2-alpha}
+alpha_nm2 <- dplyr::select(post_vars_nm2, starts_with("alpha"))
+prior_nm2 <- map_estimate(dplyr::select(post_vars_nm2, starts_with("prior_for_inclusion")))
+g_alpha_nm2 <- dplyr::select(post_vars_nm2, starts_with("inclusion.alpha"))
+g_alpha_mean_nm2 <- matrix(colMeans(g_alpha_nm2), NSpecies_nm1, NSpecies_nm1)
+```
+
+### Bayes factors
+
+```{r nm2-bf, fig.cap="Bayes factors -- Grouping 2."}
+BF_nm2 <- compute_bayes_factors(g_alpha_mean_nm2, prior_nm2$MAP_Estimate, NSpecies_nm1)
+p_bf_nm2 <- plot_bayes_heatmap(BF_nm2, NSpecies_nm1)
+p_bf_nm2
+save_fig(p_bf_nm2, "bayes_factors_nonmixo_2.pdf", width = 7, height = 5)
+```
+
+## Posterior predicted time series
+
+```{r nm2-ppc, fig.height=10, fig.cap="Posterior predicted checks -- Grouping 2 (7 types)."}
+ppc_nm2 <- build_ppc(post_vars_nm2, NSpecies_nm1, NTimeSteps, nloops_nm2,
+                      Names_nm1, data_nm2, data_full$Days_seq / 30)
+PPC_nm2 <- wrap_plots(ppc_nm2$plots, ncol = 2) +
+  plot_annotation(title = "Posterior predicted time series -- Grouping 2")
+PPC_nm2
+save_fig(PPC_nm2, "PPC_TS_fullplot_nonmixo2.pdf", width = 10, height = 10, subdir = "nonmixo_2")
+if (SAVE_FIGS) ggsave("manuscript/figs/PPC_TS_fullplot_nonmixo2.pdf", PPC_nm2, width = 10, height = 10)
+```
+
+## Stability
+
+```{r nm2-stability}
+stab_nm2 <- compute_stability(post_vars_nm2, NSpecies_nm1, data_list_nm2$dt)
+stab_measures_nm2 <- stab_nm2$stability_measures
+knitr::kable(map_estimate(stab_measures_nm2), caption = "Grouping 2: MAP stability estimates.")
+```
+
+## Wrapped stability
+
+```{r nm2-wrapped, fig.width=15, fig.height=7, fig.cap="Eigenvalue spectrum and feasibility -- Grouping 2."}
+p_wrap_nm2 <- plot_wrapped_stability(stab_nm2$Eigenvals, stab_nm2$stability_measures$Resilience,
+                                      stab_nm2$EqAbund, stab_nm2$k_draws, Names_nm1, NSpecies_nm1)
+p_wrap_nm2
+save_fig(p_wrap_nm2, "Wrapped_stability_nonmixo_2.pdf", width = 15, height = 7)
+```
+
+## Network visualizations
+
+```{r nm2-networks, fig.width=11, fig.height=10, fig.cap="Interaction networks -- Grouping 2."}
+file_sil_nm2 <- c("data/silhouettes/Bacteria.png",
+                   "data/silhouettes/Picoplankton.png",
+                   "data/silhouettes/Nanozooplankton.png",
+                   "data/silhouettes/Nanoplankton.png",
+                   "data/silhouettes/Microautotrophs_Nonmixo_2.png",
+                   "data/silhouettes/Microzooplankton_Nonmixo_2.png",
+                   "data/silhouettes/Mesozooplankton.png")
+
+build_network_figure(alpha_nm2, g_alpha_mean_nm2, NSpecies_nm1,
+                     file_sil_nm2, "nonmixo_2",
+                     "Interaction_networks_wlegend_nonmixo_2.pdf",
+                     "output/nonmixo_2/figs/Network_legend_nonmixo2.png",
+                     "output/nonmixo_2/figs/Network_legend_arrows.png")
+```
+
+# Stability comparison across groupings
+
+Does the mixotrophic-web grouping produce different stability properties compared to the traditional plant-animal dichotomy? This section compares the posterior distributions of the three stability metrics side by side.
+
+```{r compare-load}
+stab_M  <- stab_measures_mixo
+stab_N1 <- stab_measures_nm1
+stab_N2 <- stab_measures_nm2
+
+pal3 <- c("#0072B2", "#D55E00", "#009E73")
+```
+
+```{r compare-plot, fig.width=16, fig.height=5, fig.cap="Comparison of stability metrics across community classifications."}
+make_hist <- function(metric, xlab, ref_line) {
+  df <- reshape2::melt(data.frame(
+    Mixotrophic     = stab_M[[metric]],
+    `Plant-animal 1` = stab_N1[[metric]],
+    `Plant-animal 2` = stab_N2[[metric]], check.names = FALSE),
+    variable.name = "Group", value.name = "val")
+  ggpubr::gghistogram(df, x = "val", add = "mean", bins = 100, rug = TRUE,
+    color = "Group", fill = "Group", palette = pal3,
+    xlab = xlab, ylab = "Density") +
+    geom_vline(xintercept = ref_line, linewidth = 1)
+}
+
+Stab_plot <- make_hist("Resilience", "Resilience", 1) +
+  make_hist("Reactivity", "Reactivity", 0) +
+  make_hist("Stochastic structural stability", "Stochastic structural stability", 0) +
+  plot_annotation(
+    title = "Stability properties",
+    subtitle = "LVR model fitted to different functional-type groupings",
+    theme = theme(plot.title = element_text(size = 35),
+                  plot.subtitle = element_text(size = 16)))
+Stab_plot
+save_fig(Stab_plot, "Stab_plot_compare.pdf", width = 16, height = 5)
+```
+
+```{r compare-summary}
+cat("--- Mixotrophic web ---\n")
+print(map_estimate(stab_M))
+cat("\n--- Plant-animal Grouping 1 ---\n")
+print(map_estimate(stab_N1))
+cat("\n--- Plant-animal Grouping 2 ---\n")
+print(map_estimate(stab_N2))
+```
+
+# Save final workspace
+
+```{r final-save, eval=FALSE}
+save.image("output/Image_FullAnalysis.RData")
+message("Analysis complete.")
+```
+
+# Session information
+
+R version, platform and versions of all attached and loaded packages used to render this report.
+
+```{r session-info, cache=FALSE}
+devtools::session_info()
+```
+
+---
+
+*Report generated with R `r getRversion()` on `r format(Sys.time(), '%Y-%m-%d %H:%M')`.*
